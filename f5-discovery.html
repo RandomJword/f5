@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F5 — Discovery & Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0c0c0e;
+  --surface: #16161a;
+  --surface-2: #1e1e24;
+  --border: #2a2a32;
+  --text: #e8e6e3;
+  --muted: #8a8a96;
+  --accent: #6c63ff;
+  --green: #4ecdc4;
+  --red: #ff6b6b;
+  --yellow: #ffd93d;
+  --pink: #ff6b9d;
+}
+html { font-size: 16px; scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--accent); color: #fff; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 clamp(1.5rem, 4vw, 3rem); }
+section { padding: clamp(3rem, 6vw, 5rem) 0; border-bottom: 1px solid var(--border); }
+h1 { font-family: 'Space Mono', monospace; font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
+h2 { font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; color: #fff; margin-bottom: 1rem; }
+h3 { font-weight: 700; font-size: 1.1rem; color: #fff; margin-bottom: 0.5rem; margin-top: 1.5rem; }
+h4 { font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem; }
+p { margin-bottom: 1rem; }
+.label { font-family: 'Space Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; display: block; }
+.subtitle { color: var(--muted); font-size: 1.1rem; max-width: 600px; margin-bottom: 2rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.callout { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.25rem 1.5rem; margin: 1.5rem 0; }
+.callout.risk { border-left-color: var(--red); }
+.callout.ok { border-left-color: var(--green); }
+.callout.warn { border-left-color: var(--yellow); }
+ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+li { margin-bottom: 0.4rem; }
+li::marker { color: var(--accent); }
+code { font-family: 'Space Mono', monospace; font-size: 0.85em; background: var(--surface); padding: 0.15em 0.4em; border-radius: 4px; color: var(--green); }
+pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; overflow-x: auto; font-family: 'Space Mono', monospace; font-size: 0.8rem; line-height: 1.6; color: var(--muted); margin: 1rem 0; }
+.divider { width: 60px; height: 3px; background: var(--accent); border-radius: 2px; margin: 2rem 0; }
+.mermaid { margin: 1.5rem 0; background: var(--surface); border-radius: 10px; padding: 1.5rem; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.85rem; }
+th { text-align: left; padding: 0.75rem 1rem; background: var(--surface-2); color: #fff; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+td:first-child { color: var(--text); font-weight: 500; }
+.risk-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.risk-high { background: rgba(255,107,107,0.2); color: var(--red); }
+.risk-med { background: rgba(255,217,61,0.2); color: var(--yellow); }
+.risk-low { background: rgba(78,205,196,0.2); color: var(--green); }
+.dep-arrow { color: var(--accent); font-family: 'Space Mono', monospace; }
+@media (max-width: 700px) { .card-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<section style="border-bottom: none;">
+<div class="container">
+  <span class="label">Discovery Before Implementation</span>
+  <h1>F5 Architecture Map</h1>
+  <p class="subtitle">Solution space, dependency graph, risky unknowns, and approach validation — all before writing a line of game code.</p>
+</div>
+</section>
+
+<!-- ============================================================
+     1. SOLUTION SPACE MAP
+     ============================================================ -->
+<section>
+<div class="container">
+  <span class="label">01 — Solution Space</span>
+  <h2>Component Map</h2>
+  <p>Every module in the system, what it owns, and what it talks to.</p>
+
+  <div class="mermaid">
+graph TB
+    subgraph Browser["Browser (index.html)"]
+        direction TB
+        APP["app.js<br/><i>Init, routing, event wiring</i>"]
+
+        subgraph UI["UI Layer"]
+            UIC["ui-controller.js<br/><i>DOM, screens, grid render</i>"]
+            TIMER_UI["Timer Display<br/><i>Digits, bar, ASCII</i>"]
+            GRID_UI["Grid Component<br/><i>Cells, inputs, states</i>"]
+            RESULTS_UI["Results Screen<br/><i>Score breakdown, explanations</i>"]
+            STATS_UI["Stats Dashboard<br/><i>History, charts</i>"]
+            SETTINGS_UI["Settings Screen<br/><i>Theme, difficulty, timer</i>"]
+        end
+
+        subgraph Logic["Game Logic (pure functions)"]
+            ENGINE["game-engine.js<br/><i>newGame, calculateScore</i>"]
+            TIMER["timer.js<br/><i>Wall-clock countdown</i>"]
+            CATS["categories.js<br/><i>~60 curated categories</i>"]
+            STATS["stats.js<br/><i>Aggregate computations</i>"]
+        end
+
+        subgraph AI["AI Layer"]
+            API["claude-api.js<br/><i>Anthropic HTTP client</i>"]
+            VAL["validator.js<br/><i>Prompt builder, cache, parser</i>"]
+        end
+
+        subgraph Infra["Infrastructure"]
+            STORE["storage.js<br/><i>localStorage wrapper</i>"]
+            THEME["theme-manager.js<br/><i>Theme swap, font loading</i>"]
+        end
+    end
+
+    subgraph External["External"]
+        CLAUDE["Claude API<br/><i>Haiku 4.5</i>"]
+        FONTS["Google Fonts<br/><i>Per-theme lazy load</i>"]
+        LS["localStorage<br/><i>5MB budget</i>"]
+    end
+
+    APP --> UIC
+    APP --> ENGINE
+    APP --> THEME
+    UIC --> GRID_UI
+    UIC --> TIMER_UI
+    UIC --> RESULTS_UI
+    UIC --> STATS_UI
+    UIC --> SETTINGS_UI
+    UIC --> ENGINE
+    UIC --> VAL
+    TIMER_UI --> TIMER
+    ENGINE --> CATS
+    VAL --> API
+    VAL --> STORE
+    API --> CLAUDE
+    THEME --> FONTS
+    STORE --> LS
+    STATS --> STORE
+    STATS_UI --> STATS
+
+    classDef ui fill:#1e3a5f,stroke:#4a90d9,color:#fff
+    classDef logic fill:#1a3a2e,stroke:#4ecdc4,color:#fff
+    classDef ai fill:#3a1a3a,stroke:#ff6b9d,color:#fff
+    classDef infra fill:#2a2a32,stroke:#8a8a96,color:#fff
+    classDef ext fill:#1a1a1a,stroke:#6c63ff,color:#fff
+
+    class UIC,TIMER_UI,GRID_UI,RESULTS_UI,STATS_UI,SETTINGS_UI ui
+    class ENGINE,TIMER,CATS,STATS logic
+    class API,VAL ai
+    class STORE,THEME infra
+    class CLAUDE,FONTS,LS ext
+  </div>
+
+  <div class="divider"></div>
+
+  <h3>Module Responsibility Matrix</h3>
+  <table>
+    <thead>
+      <tr><th>Module</th><th>Owns</th><th>Reads From</th><th>Writes To</th><th>Side Effects</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>game-engine.js</code></td>
+        <td>Game state, scoring math, category/letter selection</td>
+        <td>categories.js</td>
+        <td>Nothing (pure)</td>
+        <td>None — pure functions only</td>
+      </tr>
+      <tr>
+        <td><code>timer.js</code></td>
+        <td>Countdown logic, tick callbacks</td>
+        <td>Date.now(), visibilitychange</td>
+        <td>Nothing (callbacks)</td>
+        <td>requestAnimationFrame / setTimeout</td>
+      </tr>
+      <tr>
+        <td><code>validator.js</code></td>
+        <td>Prompt construction, response parsing, cache logic</td>
+        <td>storage.js (cache), claude-api.js (responses)</td>
+        <td>storage.js (cache writes)</td>
+        <td>Network via claude-api.js</td>
+      </tr>
+      <tr>
+        <td><code>claude-api.js</code></td>
+        <td>HTTP client for Anthropic API</td>
+        <td>storage.js (API key)</td>
+        <td>Nothing</td>
+        <td>Network fetch</td>
+      </tr>
+      <tr>
+        <td><code>ui-controller.js</code></td>
+        <td>All DOM manipulation, screen transitions</td>
+        <td>game-engine, validator, stats, timer</td>
+        <td>DOM</td>
+        <td>DOM mutation</td>
+      </tr>
+      <tr>
+        <td><code>storage.js</code></td>
+        <td>localStorage abstraction</td>
+        <td>localStorage</td>
+        <td>localStorage</td>
+        <td>Disk I/O</td>
+      </tr>
+      <tr>
+        <td><code>theme-manager.js</code></td>
+        <td>Theme preference, font loading, body class</td>
+        <td>storage.js</td>
+        <td>DOM (body class), &lt;link&gt; element</td>
+        <td>DOM mutation, network (fonts)</td>
+      </tr>
+      <tr>
+        <td><code>categories.js</code></td>
+        <td>Category data pool</td>
+        <td>Nothing</td>
+        <td>Nothing</td>
+        <td>None — static data export</td>
+      </tr>
+      <tr>
+        <td><code>stats.js</code></td>
+        <td>Aggregate stat computations</td>
+        <td>storage.js (history)</td>
+        <td>Nothing (pure)</td>
+        <td>None — pure functions</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- ============================================================
+     2. DATA FLOW DIAGRAM
+     ============================================================ -->
+<section>
+<div class="container">
+  <span class="label">02 — Data Flow</span>
+  <h2>Game Lifecycle Sequence</h2>
+  <p>What happens from "New Game" to "Score Displayed" — every state transition and data handoff.</p>
+
+  <div class="mermaid">
+sequenceDiagram
+    participant U as Player
+    participant UI as ui-controller
+    participant E as game-engine
+    participant T as timer
+    participant V as validator
+    participant A as claude-api
+    participant S as storage
+
+    U->>UI: Click "New Game"
+    UI->>E: newGame(difficulty)
+    E->>E: selectCategories(pool, difficulty)
+    E->>E: selectLetters(mode)
+    E-->>UI: GameState {categories, letters, grid[5][5]}
+    UI->>UI: renderGrid(state)
+    UI->>T: start(300s, onTick, onExpiry)
+
+    loop Every ~100ms
+        T->>T: remaining = endTime - Date.now()
+        T-->>UI: onTick(remaining)
+        UI->>UI: updateTimerDisplay(remaining)
+    end
+
+    U->>UI: Type answers in cells
+    UI->>UI: updateCell(row, col, text)
+
+    T-->>UI: onExpiry()
+    UI->>UI: lockGrid()
+    UI->>V: validate(grid, categories, letters)
+    V->>S: checkCache(answers)
+    S-->>V: cachedResults (partial)
+
+    V->>A: call(systemPrompt, uncachedAnswers)
+    A->>A: fetch("api.anthropic.com/v1/messages")
+    A-->>V: API response (JSON)
+    V->>V: parseResponse + mergeWithCached
+    V->>S: writeCache(newResults)
+
+    V-->>UI: validationResults[25]
+    UI->>E: calculateScore(results)
+    E-->>UI: ScoreBreakdown {rows², cols², total}
+    UI->>UI: revealResults(cell-by-cell animation)
+    UI->>S: saveGameToHistory(state, results, score)
+    UI->>U: Show results screen
+  </div>
+
+  <div class="divider"></div>
+
+  <h3>State Machine</h3>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> Setup: App loads
+    Setup --> Playing: "New Game" clicked
+    Playing --> Validating: Timer expires
+    Playing --> Abandoned: Player quits mid-game
+    Validating --> Scored: AI results received
+    Validating --> SelfScoring: API failure
+    SelfScoring --> Scored: Player submits self-scores
+    Scored --> Setup: "New Game" clicked
+    Abandoned --> Setup: "New Game" clicked
+  </div>
+</div>
+</section>
+
+<!-- ============================================================
+     3. DEPENDENCY GRAPH
+     ============================================================ -->
+<section>
+<div class="container">
+  <span class="label">03 — Sprint Dependencies</span>
+  <h2>What Blocks What</h2>
+  <p>Arrows mean "must be done before." Parallel tracks can be built simultaneously.</p>
+
+  <div class="mermaid">
+graph LR
+    S0["<b>S0</b><br/>Foundation<br/><i>Files, tokens, theme infra,<br/>storage, HTML shell</i>"]
+    S1["<b>S1</b><br/>The Grid<br/><i>Grid render, cell input,<br/>keyboard nav, states</i>"]
+    S2["<b>S2</b><br/>The Clock<br/><i>Timer core, display,<br/>urgency, visibility</i>"]
+    S3["<b>S3</b><br/>Game Engine<br/><i>Categories, letters,<br/>state machine, wiring</i>"]
+    S4["<b>S4</b><br/>AI Integration<br/><i>API client, validator,<br/>cache, fallback</i>"]
+    S5["<b>S5</b><br/>Scoring<br/><i>n² calc, results<br/>screen, animation</i>"]
+    S6["<b>S6</b><br/>Persistence<br/><i>History, stats,<br/>dashboard</i>"]
+    S7["<b>S7</b><br/>Themes<br/><i>8 themes, selector,<br/>responsive, settings</i>"]
+
+    S0 --> S1
+    S0 --> S2
+    S1 --> S3
+    S2 --> S3
+    S3 --> S4
+    S3 --> S5
+    S4 --> S5
+    S5 --> S6
+    S0 --> S7
+
+    style S0 fill:#6366f1,stroke:#fff,color:#fff
+    style S1 fill:#4338ca,stroke:#fff,color:#fff
+    style S2 fill:#4f46e5,stroke:#fff,color:#fff
+    style S3 fill:#7c3aed,stroke:#fff,color:#fff
+    style S4 fill:#db2777,stroke:#fff,color:#fff
+    style S5 fill:#059669,stroke:#fff,color:#fff
+    style S6 fill:#d97706,stroke:#fff,color:#fff
+    style S7 fill:#dc2626,stroke:#fff,color:#fff
+  </div>
+
+  <h3>Key Observations</h3>
+  <div class="card-grid">
+    <div class="card">
+      <h4>Parallel Track 1</h4>
+      <p><strong>S1 (Grid) and S2 (Clock)</strong> are independent after S0. They can be built simultaneously. They converge at S3 where the game engine wires them together.</p>
+    </div>
+    <div class="card">
+      <h4>Parallel Track 2</h4>
+      <p><strong>S7 (Themes)</strong> only depends on S0 (the variable contract). Theme CSS can be developed in parallel with everything else, applied at any point.</p>
+    </div>
+    <div class="card">
+      <h4>Critical Path</h4>
+      <p><strong>S0 → S1 → S3 → S4 → S5 → S6</strong> is the longest chain. S4 (AI Integration) is the most complex sprint on the critical path. Plan extra time there.</p>
+    </div>
+    <div class="card">
+      <h4>First Playable</h4>
+      <p>End of <strong>S3</strong> = first playable game (self-scored). End of <strong>S4</strong> = AI-judged game. End of <strong>S5</strong> = complete MVP with scoring.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3>Module-Level Dependencies</h3>
+  <pre>
+game-engine.js  ←── categories.js (static data, no runtime dep)
+validator.js    ←── claude-api.js (makes API calls)
+                ←── storage.js (reads/writes cache)
+ui-controller.js ←── game-engine.js (state + scoring)
+                 ←── validator.js (validation results)
+                 ←── timer.js (tick callbacks)
+                 ←── theme-manager.js (body class)
+                 ←── storage.js (settings, history)
+stats.js        ←── storage.js (reads history)
+app.js          ←── everything (orchestrator)
+
+Zero circular dependencies.
+game-engine.js and stats.js have zero imports from UI layer.
+  </pre>
+</div>
+</section>
+
+<!-- ============================================================
+     4. RISKY UNKNOWNS
+     ============================================================ -->
+<section>
+<div class="container">
+  <span class="label">04 — Risky Unknowns</span>
+  <h2>What Could Go Wrong</h2>
+  <p>Ranked by impact × likelihood. Each risk has a mitigation strategy and a "spike" (small experiment to validate before committing).</p>
+
+  <table>
+    <thead>
+      <tr><th>Risk</th><th>Level</th><th>Impact</th><th>Mitigation</th><th>Spike to Validate</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>AI judging inconsistency</td>
+        <td><span class="risk-tag risk-high">High</span></td>
+        <td>Same answer gets different rulings across games. Player trust collapses.</td>
+        <td>temperature: 0, aggressive caching (once judged = locked forever), appeal system with Sonnet.</td>
+        <td>Run 50 identical validation requests for edge cases (The Beatles, New York, JFK). Measure variance. If >5% inconsistency, add few-shot examples to system prompt.</td>
+      </tr>
+      <tr>
+        <td>AI returns malformed JSON</td>
+        <td><span class="risk-tag risk-high">High</span></td>
+        <td>Validation fails entirely. Player's round is wasted.</td>
+        <td>Strict JSON parsing with try/catch. One retry with "respond with JSON only" reinforcement. Fallback to self-scoring.</td>
+        <td>Send 20 validation batches to Haiku with the exact system prompt. Count JSON parse failures. If >5%, experiment with structured output / json_mode if available.</td>
+      </tr>
+      <tr>
+        <td>CORS / browser API access</td>
+        <td><span class="risk-tag risk-med">Med</span></td>
+        <td>Direct browser fetch to Anthropic API blocked by CORS. Game can't validate at all.</td>
+        <td>anthropic-dangerous-direct-browser-access: true header. Proven pattern from CPA Study Buddy.</td>
+        <td>Single fetch call from a bare HTML file to api.anthropic.com/v1/messages. Confirm 200 response. Do this FIRST in Sprint 0 before building anything else.</td>
+      </tr>
+      <tr>
+        <td>ES modules without server</td>
+        <td><span class="risk-tag risk-med">Med</span></td>
+        <td>import/export fails on file:// protocol. Player can't just double-click index.html.</td>
+        <td>Require python3 -m http.server or VS Code Live Server. Document in README. Or: consider single-file build for distribution.</td>
+        <td>Test: can 8 ES module files import each other via python3 -m http.server on macOS? Confirm Safari + Chrome compatibility.</td>
+      </tr>
+      <tr>
+        <td>Google Fonts loading latency</td>
+        <td><span class="risk-tag risk-med">Med</span></td>
+        <td>Theme switch causes flash of unstyled text. Neon Arcade loads Orbitron and it's slow.</td>
+        <td>font-display: swap in CSS. Preload the default theme's fonts. Lazy-load others only when selected. Show a brief loading indicator on theme switch.</td>
+        <td>Load all 8 theme font sets and measure time-to-render on a slow 3G throttle. If any theme takes >2s, preload its primary font or provide a system-font fallback.</td>
+      </tr>
+      <tr>
+        <td>localStorage quota (5MB)</td>
+        <td><span class="risk-tag risk-low">Low</span></td>
+        <td>At ~2KB/game + ~200B/cache entry, quota hit after ~2000 games + thousands of cached answers.</td>
+        <td>LRU eviction for validation cache. History export before purge. Monitor storage size.</td>
+        <td>No spike needed — this only becomes a problem at scale. Add a storage.js utility to check quota early.</td>
+      </tr>
+      <tr>
+        <td>Category/letter dead cells</td>
+        <td><span class="risk-tag risk-low">Low</span></td>
+        <td>"Opera Composers starting with X" — impossible cell frustrates player.</td>
+        <td>Curate categories to avoid narrow + rare letter combos. Selection algorithm can cross-check. Allow empty cells without penalty (just fewer points via n²).</td>
+        <td>Generate 100 random grids with the proposed category pool. Have Claude evaluate: how many cells are genuinely impossible? Target: &lt;5% dead cells per grid on Standard mode.</td>
+      </tr>
+      <tr>
+        <td>Haiku model deprecation</td>
+        <td><span class="risk-tag risk-low">Low</span></td>
+        <td>Anthropic retires claude-haiku-4-5 model ID.</td>
+        <td>Model ID is a single constant in claude-api.js. One-line change. Settings screen could allow model override.</td>
+        <td>No spike needed — just keep the model ID in one place.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="divider"></div>
+
+  <h3>Recommended Spike Order</h3>
+  <p>Before writing any game code, run these 3 experiments (< 1 hour total):</p>
+
+  <div class="callout risk">
+    <h4>Spike 1: API Access from Browser (10 min)</h4>
+    <p style="margin:0;">Single HTML file. One fetch to Anthropic API with the dangerous-direct-browser-access header. Confirm 200 response in both Safari and Chrome. <strong>If this fails, the entire architecture changes</strong> (would need a proxy server). This is the highest-risk validation.</p>
+  </div>
+
+  <div class="callout risk">
+    <h4>Spike 2: Validation Consistency (20 min)</h4>
+    <p style="margin:0;">Send the exact system prompt + 10 edge cases to Haiku 20 times each (200 calls). Parse responses. Measure: (a) JSON parse success rate, (b) ruling consistency for identical inputs. Target: >98% valid JSON, >95% consistent rulings. <strong>If inconsistent, add few-shot examples or switch to Sonnet.</strong></p>
+  </div>
+
+  <div class="callout warn">
+    <h4>Spike 3: Category Viability (15 min)</h4>
+    <p style="margin:0;">Generate 20 random grids with the proposed category pool. Ask Claude to evaluate each cell: "Is there a valid answer for [category] starting with [letter]?" Count impossible cells. Target: <5% on Standard, <15% on Expert. <strong>If too many dead cells, expand the category pool or add letter-compatibility metadata.</strong></p>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================
+     5. APPROACH VALIDATION
+     ============================================================ -->
+<section>
+<div class="container">
+  <span class="label">05 — Approach Validation</span>
+  <h2>Are We Building the Right Thing the Right Way?</h2>
+
+  <h3>Architecture Decisions & Tradeoffs</h3>
+
+  <table>
+    <thead>
+      <tr><th>Decision</th><th>Alternative Considered</th><th>Why We Chose This</th><th>Reversibility</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Vanilla HTML/CSS/JS</td>
+        <td>React, Svelte, or Vue</td>
+        <td>Zero build step. 5×5 grid is not complex enough to justify a framework. Proven pattern from prior projects. Faster iteration.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — can always wrap in React later if needed</td>
+      </tr>
+      <tr>
+        <td>Direct browser API calls</td>
+        <td>Proxy server (Vercel function)</td>
+        <td>No server to deploy/maintain. Player uses their own API key = zero cost to us. Proven in CPA Study Buddy.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — add proxy in Phase 3 for multiplayer</td>
+      </tr>
+      <tr>
+        <td>Haiku for validation</td>
+        <td>Sonnet or client-side dictionary</td>
+        <td>25x cheaper than Sonnet. Classification doesn't need creativity. Dictionary approach can't handle edge cases or explain rulings.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — model ID is one constant. Upgrade anytime.</td>
+      </tr>
+      <tr>
+        <td>Batch validation at round end</td>
+        <td>Real-time validation as player types</td>
+        <td>Preserves time pressure (the fun). One API call vs 25. No latency interrupting flow state.</td>
+        <td><span class="risk-tag risk-med">Medium</span> — switching to real-time would require validator.js refactor</td>
+      </tr>
+      <tr>
+        <td>CSS custom properties for theming</td>
+        <td>CSS-in-JS, separate stylesheets, Tailwind</td>
+        <td>Native browser feature. Zero runtime cost. One class swap. Components stay theme-unaware.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — the variable contract is the API</td>
+      </tr>
+      <tr>
+        <td>n² scoring (original game)</td>
+        <td>Flat scoring (1pt per cell)</td>
+        <td>Mathematically elegant. Creates meaningful decisions about where to spend time. Proven over 60 years of play.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — scoring is one pure function</td>
+      </tr>
+      <tr>
+        <td>localStorage for Phase 1</td>
+        <td>Supabase from day 1</td>
+        <td>Zero setup. No auth flow needed. No server. Sufficient for solo play. Add Supabase in Phase 2 when cross-device sync matters.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — storage.js abstracts the backend. Swap implementation, keep interface.</td>
+      </tr>
+      <tr>
+        <td>~60 curated categories</td>
+        <td>AI-generated categories per game</td>
+        <td>Zero latency at game start. Predictable quality. No API call before the player even starts. AI generates unpredictable difficulty.</td>
+        <td><span class="risk-tag risk-low">Easy</span> — add AI category generation as an option later</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="divider"></div>
+
+  <h3>Validation Checklist</h3>
+
+  <div class="callout ok">
+    <p style="margin:0;"><strong>Is the core mechanic proven?</strong> Yes — 150+ years as a parlor game, 60 years as a commercial product, millions of Scattergories copies sold. The mechanic works. We're digitizing, not inventing.</p>
+  </div>
+
+  <div class="callout ok">
+    <p style="margin:0;"><strong>Is the tech stack appropriate?</strong> Yes — vanilla web for a grid + timer + API calls is right-sized. No framework overhead. Matches the developer's prior shipped projects.</p>
+  </div>
+
+  <div class="callout ok">
+    <p style="margin:0;"><strong>Is the AI integration feasible?</strong> Likely yes — CPA Study Buddy proves the browser-to-API pattern. Haiku handles classification well. Needs spike validation for consistency.</p>
+  </div>
+
+  <div class="callout ok">
+    <p style="margin:0;"><strong>Is the scope achievable?</strong> Yes — the MVP (S0–S5) is 6 sprints of focused work. Each sprint has clear inputs and outputs. No ambiguous requirements. Theme work (S7) is independent and can be deferred.</p>
+  </div>
+
+  <div class="callout warn">
+    <p style="margin:0;"><strong>Open question: ES modules on file://</strong> — Need to confirm the python server workflow is acceptable, or consider a single-file build alternative for easy distribution. Low risk, but worth deciding upfront.</p>
+  </div>
+
+  <div class="callout warn">
+    <p style="margin:0;"><strong>Open question: Default theme.</strong> Which of the 8 themes ships as default? This affects first impressions significantly. Recommend: <strong>Retro Bookshelf</strong> (nostalgic, warm, matches the game's heritage) or <strong>Newspaper</strong> (intellectual, crossword-adjacent, familiar to target audience).</p>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================
+     6. PSEUDOCODE: CRITICAL PATHS
+     ============================================================ -->
+<section style="border-bottom: none;">
+<div class="container">
+  <span class="label">06 — Critical Path Pseudocode</span>
+  <h2>The 3 Hardest Functions</h2>
+  <p>If these work, everything else is straightforward.</p>
+
+  <h3>1. The n² Score Calculator</h3>
+<pre>
+function calculateScore(grid, validationResults) {
+  // grid[row][col] = { answer }
+  // validationResults[row][col] = { valid: bool }
+
+  const rowTotals = [0, 0, 0, 0, 0]    // General Score (breadth)
+  const colTotals = [0, 0, 0, 0, 0]    // Special Score (depth)
+
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      if (validationResults[r][c].valid) {
+        rowTotals[r]++
+        colTotals[c]++
+      }
+    }
+  }
+
+  const general = rowTotals.reduce((sum, n) => sum + n * n, 0)  // Σ rows²
+  const special = colTotals.reduce((sum, n) => sum + n * n, 0)  // Σ cols²
+
+  return {
+    rowTotals,              // [5, 4, 5, 3, 4]
+    colTotals,              // [5, 4, 4, 4, 4]
+    rowScores: rowTotals.map(n => n * n),  // [25, 16, 25, 9, 16]
+    colScores: colTotals.map(n => n * n),  // [25, 16, 16, 16, 16]
+    general,                // 91
+    special,                // 89
+    total: general + special,  // 180
+    max: 250,
+    validCount: rowTotals.reduce((a, b) => a + b, 0),
+    totalCells: 25,
+  }
+}
+</pre>
+
+  <h3>2. The Validation Prompt Builder</h3>
+<pre>
+function buildValidationRequest(grid, categories, letters) {
+  const systemPrompt = `You are the judge for "Facts in Five."
+Rules:
+1. Answer must belong to the category.
+2. Answer must start with the specified letter.
+   - People: SURNAME is the keyword (e.g., "Einstein" for E).
+   - Titles: ignore "The", "A", "An" (e.g., The Birds → B).
+   - Places: first word (e.g., New York → N).
+3. Must be real and verifiable — no fictional entries.
+4. Common abbreviations/nicknames OK if widely recognized.
+5. Minor spelling errors OK if clearly recognizable.
+
+Respond with a JSON array only. No markdown fences.
+Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`
+
+  const answers = []
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const answer = grid[r][c].answer.trim()
+      if (answer) {
+        answers.push({
+          id: `r${r}c${c}`,
+          category: categories[r].name,
+          letter: letters[c],
+          answer: answer,
+        })
+      }
+    }
+  }
+
+  // Check cache first — only send uncached answers
+  const { cached, uncached } = partitionByCache(answers)
+
+  if (uncached.length === 0) return { allCached: true, results: cached }
+
+  return {
+    allCached: false,
+    systemPrompt,
+    userMessage: `Validate:\n${JSON.stringify(uncached)}`,
+    cachedResults: cached,
+  }
+}
+</pre>
+
+  <h3>3. The Wall-Clock Timer</h3>
+<pre>
+function createTimer(durationSeconds, onTick, onExpiry) {
+  const endTime = Date.now() + (durationSeconds * 1000)
+  let running = true
+  let rafId = null
+
+  function tick() {
+    if (!running) return
+    const remaining = Math.max(0, endTime - Date.now())
+    const seconds = Math.ceil(remaining / 1000)
+
+    onTick({
+      remaining,             // ms remaining (for progress bar precision)
+      seconds,               // whole seconds (for digit display)
+      fraction: remaining / (durationSeconds * 1000),  // 0..1 for bar
+      isWarning: seconds <= 60 && seconds > 15,
+      isCritical: seconds <= 15,
+    })
+
+    if (remaining <= 0) {
+      running = false
+      onExpiry()
+      return
+    }
+
+    rafId = requestAnimationFrame(tick)
+  }
+
+  // Handle tab visibility
+  function onVisibilityChange() {
+    if (document.hidden) {
+      // Tab hidden — stop RAF (browser throttles anyway)
+      if (rafId) cancelAnimationFrame(rafId)
+    } else {
+      // Tab visible — restart ticking (wall clock still correct)
+      tick()
+    }
+  }
+
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  tick()  // Start
+
+  return {
+    stop() {
+      running = false
+      if (rafId) cancelAnimationFrame(rafId)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }
+}
+</pre>
+
+  <div class="divider"></div>
+
+  <div class="callout ok">
+    <p style="margin:0;"><strong>Verdict: Ready to build.</strong> The solution space is mapped. Dependencies are clear. Risks are identified with spikes to validate them. The 3 hardest functions are pseudocoded. Run the 3 spikes, then start Sprint 0.</p>
+  </div>
+
+</div>
+</section>
+
+<section style="border-bottom: none; padding: 3rem 0;">
+<div class="container" style="text-align: center;">
+  <p style="color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.75rem;">F5 Discovery Document — March 2026<br>Discovery before implementation. Measure twice, cut once.</p>
+</div>
+</section>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#4338ca',
+    primaryTextColor: '#e8e6e3',
+    primaryBorderColor: '#6c63ff',
+    lineColor: '#6c63ff',
+    secondaryColor: '#1e1e24',
+    tertiaryColor: '#16161a',
+    background: '#16161a',
+    mainBkg: '#1e1e24',
+    nodeBorder: '#6c63ff',
+    clusterBkg: '#0c0c0e',
+    clusterBorder: '#2a2a32',
+    titleColor: '#e8e6e3',
+    edgeLabelBackground: '#16161a',
+    nodeTextColor: '#e8e6e3',
+    actorBkg: '#1e1e24',
+    actorBorder: '#6c63ff',
+    actorTextColor: '#e8e6e3',
+    actorLineColor: '#6c63ff',
+    signalColor: '#e8e6e3',
+    signalTextColor: '#e8e6e3',
+    labelBoxBkgColor: '#1e1e24',
+    labelBoxBorderColor: '#6c63ff',
+    labelTextColor: '#e8e6e3',
+    loopTextColor: '#8a8a96',
+    noteBkgColor: '#1e1e24',
+    noteBorderColor: '#6c63ff',
+    noteTextColor: '#e8e6e3',
+    activationBkgColor: '#4338ca',
+    activationBorderColor: '#6c63ff',
+    sequenceNumberColor: '#fff',
+  },
+  flowchart: { curve: 'basis', htmlLabels: true },
+  sequence: { mirrorActors: false, messageMargin: 40 },
+});
+</script>
+
+</body>
+</html>

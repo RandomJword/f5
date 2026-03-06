@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.gstatic.com;">
+<title>F5 — Kanban</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f4f8;--card:#ffffff;--text:#2d2d3a;--text-dark:#1a1a2e;--text2:#6b6b80;--text3:#9b9bae;
+  --border:#dddde5;--border2:#c8c8d4;
+  --indigo:#4338ca;--indigo-hover:#3730a3;--indigo-light:#eef2ff;--indigo-muted:#c7d2fe;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 2px 8px rgba(0,0,0,0.06);--shadow-lg:0 6px 24px rgba(0,0,0,0.1);
+  --font:'Inter',sans-serif;
+  --col-done:rgba(199,210,254,0.18);--col-next:rgba(67,56,202,0.06);
+  --col-backlog:#fafafc;--col-future:rgba(236,232,248,0.2);
+}
+html{font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+
+/* Header */
+header{padding:20px 28px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(255,255,255,0.6);backdrop-filter:blur(8px)}
+header h1{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--indigo);letter-spacing:-0.5px}
+header h1 span{font-family:var(--font);font-weight:400;color:var(--text3);font-size:15px;margin-left:4px}
+.header-meta{font-size:11px;color:var(--text3);line-height:1.4}
+.header-actions{margin-left:auto;display:flex;gap:8px}
+.header-actions button{padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;
+  cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);transition:all 0.15s;font-family:var(--font)}
+.header-actions button:hover{border-color:var(--text2);color:var(--text)}
+.header-actions button.primary{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.header-actions button.primary:hover{background:var(--indigo-hover)}
+
+/* Legend */
+.legend{padding:8px 28px;border-bottom:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#fafafc}
+.legend-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-right:4px}
+.legend .tag{font-size:10px}
+.legend-divider{width:1px;height:16px;background:var(--border);margin:0 4px}
+
+/* Board */
+.board{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;min-height:calc(100vh - 110px);overflow-x:auto}
+.column{padding:16px 14px;border-right:1px solid var(--border);min-width:260px}
+.column:last-child{border-right:none}
+.column.col-done{background:var(--col-done)}
+.column.col-next{background:var(--col-next)}
+.column.col-backlog{background:var(--col-backlog)}
+.column.col-future{background:var(--col-future)}
+.col-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--border)}
+.col-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+.col-done .col-title{color:var(--text3)}
+.col-next .col-title{color:var(--indigo)}
+.col-count{font-size:10px;font-weight:600;background:var(--border);color:var(--text3);
+  padding:1px 7px;border-radius:10px;min-width:18px;text-align:center}
+.col-add{margin-left:auto;background:none;border:none;font-size:18px;color:var(--text3);
+  cursor:pointer;padding:0 4px;line-height:1;transition:color 0.15s}
+.col-add:hover{color:var(--indigo)}
+
+/* Sprint Headers */
+.sprint-header{display:flex;align-items:center;gap:8px;margin:14px 0 8px;padding:6px 0}
+.sprint-header:first-child{margin-top:0}
+.sprint-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  padding:3px 10px;border-radius:10px;color:#fff;white-space:nowrap}
+.sprint-count{font-size:10px;color:var(--text3);font-weight:500}
+.sprint-line{flex:1;height:1px;background:var(--border)}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;margin-bottom:10px;cursor:grab;transition:box-shadow 0.15s,border-color 0.15s;position:relative}
+.card:hover{box-shadow:var(--shadow-lg);border-color:var(--border2)}
+.card.dragging{opacity:0.4;cursor:grabbing}
+.card.drag-over{border-color:var(--indigo);border-style:dashed}
+.card-color{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.card-title{font-size:13px;font-weight:600;color:var(--text-dark);margin-bottom:5px;padding-right:20px;line-height:1.35}
+.card-desc{font-size:11.5px;color:var(--text2);line-height:1.55;margin-bottom:8px}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;white-space:nowrap}
+.tag.ui{background:#DBEAFE;color:#1e40af}
+.tag.core{background:#E0E7FF;color:#3730a3}
+.tag.ai{background:#FCE7F3;color:#9d174d}
+.tag.theme{background:#F3E8FF;color:#7e22ce}
+.tag.data{background:#D1FAE5;color:#065f46}
+.tag.polish{background:#FEF3C7;color:#92400e}
+.tag.infra{background:#E5E7EB;color:#374151}
+.card-actions{position:absolute;top:8px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity 0.15s}
+.card:hover .card-actions{opacity:1}
+.card-actions button{background:none;border:none;font-size:13px;cursor:pointer;padding:2px;color:var(--text3);
+  border-radius:4px;transition:color 0.1s}
+.card-actions button:hover{color:var(--indigo)}
+
+/* Card color bars */
+.color-ui{background:#93C5FD}
+.color-core{background:#A5B4FC}
+.color-ai{background:#F9A8D4}
+.color-theme{background:#D8B4FE}
+.color-data{background:#6EE7B7}
+.color-polish{background:#FCD34D}
+.color-infra{background:#9CA3AF}
+.color-done{background:#A5B4FC}
+
+/* Drop zone */
+.drop-zone{min-height:50px;border:2px dashed transparent;border-radius:var(--radius);transition:border-color 0.2s;margin-top:4px}
+.drop-zone.active{border-color:var(--indigo)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.35);z-index:100;display:flex;
+  align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;backdrop-filter:blur(2px)}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal{background:var(--card);border-radius:var(--radius);padding:28px;width:90%;max-width:460px;
+  box-shadow:var(--shadow-lg);transform:translateY(10px);transition:transform 0.2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal h3{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--text-dark);margin-bottom:20px}
+.modal label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;
+  text-transform:uppercase;letter-spacing:0.8px}
+.modal input,.modal textarea,.modal select{width:100%;padding:10px 12px;border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);margin-bottom:14px;
+  background:#fafafc;transition:border-color 0.15s;color:var(--text)}
+.modal input:focus,.modal textarea:focus,.modal select:focus{outline:none;border-color:var(--indigo)}
+.modal textarea{resize:vertical;min-height:70px}
+.modal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.modal-tags .tag{cursor:pointer;opacity:0.35;transition:opacity 0.15s;font-size:11px;padding:4px 10px}
+.modal-tags .tag.selected{opacity:1}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.modal-btns button{padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+  cursor:pointer;border:1.5px solid;transition:all 0.15s;font-family:var(--font)}
+.modal-btns .cancel{border-color:var(--border2);background:transparent;color:var(--text2)}
+.modal-btns .cancel:hover{border-color:var(--text2)}
+.modal-btns .save{border-color:var(--indigo);background:var(--indigo);color:#fff}
+.modal-btns .save:hover{background:var(--indigo-hover)}
+.modal-btns .delete{border-color:#c4716c;background:transparent;color:#c4716c;margin-right:auto}
+.modal-btns .delete:hover{background:#c4716c;color:#fff}
+
+/* Responsive */
+@media(max-width:1000px){
+  .board{grid-template-columns:1fr 1fr;gap:0}
+}
+@media(max-width:600px){
+  .board{grid-template-columns:1fr;gap:0}
+  .column{border-right:none;border-bottom:1px solid var(--border);min-height:auto;padding:14px 12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>F5 <span>Kanban</span></h1>
+  <div class="header-meta">Facts in Five, reimagined &mdash; 5 categories &times; 5 letters &times; 5 minutes<br>Priority: top &rarr; bottom within each column</div>
+  <div class="header-actions">
+    <button id="btn-export">Copy as Markdown</button>
+    <button class="primary" id="btn-add-global">+ Add Card</button>
+  </div>
+</header>
+
+<div class="legend">
+  <span class="legend-label">Tags:</span>
+  <span class="tag ui">UI</span>
+  <span class="tag core">Core</span>
+  <span class="tag ai">AI</span>
+  <span class="tag theme">Theme</span>
+  <span class="tag data">Data</span>
+  <span class="tag polish">Polish</span>
+  <span class="tag infra">Infra</span>
+  <span class="legend-divider"></span>
+  <span class="legend-label">Sprints:</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#6366f1;color:#fff">S0</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#4338ca;color:#fff">S1</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#4f46e5;color:#fff">S2</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#7c3aed;color:#fff">S3</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#db2777;color:#fff">S4</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#059669;color:#fff">S5</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#d97706;color:#fff">S6</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#dc2626;color:#fff">S7</span>
+</div>
+
+<div class="board">
+  <div class="column col-done" data-col="done">
+    <div class="col-header">
+      <span class="col-title">Done</span>
+      <span class="col-count" id="count-done">0</span>
+    </div>
+    <div class="card-list" id="list-done"></div>
+    <div class="drop-zone" data-col="done"></div>
+  </div>
+  <div class="column col-next" data-col="next">
+    <div class="col-header">
+      <span class="col-title">Up Next</span>
+      <span class="col-count" id="count-next">0</span>
+      <button class="col-add" data-add-col="next" title="Add card">+</button>
+    </div>
+    <div class="card-list" id="list-next"></div>
+    <div class="drop-zone" data-col="next"></div>
+  </div>
+  <div class="column col-backlog" data-col="backlog">
+    <div class="col-header">
+      <span class="col-title">Backlog</span>
+      <span class="col-count" id="count-backlog">0</span>
+      <button class="col-add" data-add-col="backlog" title="Add card">+</button>
+    </div>
+    <div class="card-list" id="list-backlog"></div>
+    <div class="drop-zone" data-col="backlog"></div>
+  </div>
+  <div class="column col-future" data-col="future">
+    <div class="col-header">
+      <span class="col-title">Future</span>
+      <span class="col-count" id="count-future">0</span>
+      <button class="col-add" data-add-col="future" title="Add card">+</button>
+    </div>
+    <div class="card-list" id="list-future"></div>
+    <div class="drop-zone" data-col="future"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <h3 id="modal-title">Add Card</h3>
+    <label>Title</label>
+    <input type="text" id="m-title" placeholder="What needs to be done?">
+    <label>Description</label>
+    <textarea id="m-desc" placeholder="Details, acceptance criteria, notes..."></textarea>
+    <label>Column</label>
+    <select id="m-col">
+      <option value="done">Done</option>
+      <option value="next">Up Next</option>
+      <option value="backlog">Backlog</option>
+      <option value="future">Future</option>
+    </select>
+    <label>Sprint</label>
+    <select id="m-sprint">
+      <option value="">(none)</option>
+    </select>
+    <label>Tags</label>
+    <div class="modal-tags" id="m-tags"></div>
+    <div class="modal-btns">
+      <button class="delete" id="m-delete" style="display:none">Delete</button>
+      <button class="cancel" id="m-cancel">Cancel</button>
+      <button class="save" id="m-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- DATA ---
+var STORAGE_KEY = 'f5-kanban-v1';
+var TAG_DEFS = [
+  {id:'ui',label:'UI',cls:'ui'},
+  {id:'core',label:'Core',cls:'core'},
+  {id:'ai',label:'AI',cls:'ai'},
+  {id:'theme',label:'Theme',cls:'theme'},
+  {id:'data',label:'Data',cls:'data'},
+  {id:'polish',label:'Polish',cls:'polish'},
+  {id:'infra',label:'Infra',cls:'infra'},
+];
+
+var TAG_COLORS = {
+  ui:'color-ui',core:'color-core',ai:'color-ai',
+  theme:'color-theme',data:'color-data',polish:'color-polish',infra:'color-infra'
+};
+
+var SPRINT_DEFS = [
+  {id:'s0',label:'S0 \u2014 Foundation',color:'#6366f1'},
+  {id:'s1',label:'S1 \u2014 The Grid',color:'#4338ca'},
+  {id:'s2',label:'S2 \u2014 The Clock',color:'#4f46e5'},
+  {id:'s3',label:'S3 \u2014 Game Engine',color:'#7c3aed'},
+  {id:'s4',label:'S4 \u2014 AI Integration',color:'#db2777'},
+  {id:'s5',label:'S5 \u2014 Scoring & Results',color:'#059669'},
+  {id:'s6',label:'S6 \u2014 Persistence & Stats',color:'#d97706'},
+  {id:'s7',label:'S7 \u2014 Themes & Polish',color:'#dc2626'},
+];
+
+var DEFAULT_CARDS = [
+  // --- UP NEXT: S0 Foundation ---
+  {id:genId(),col:'next',title:'File & Folder Structure',
+    desc:'Create project scaffolding: index.html, css/ (reset, tokens, layout, components, animations), js/ (app.js, modules/), assets/. All empty shells wired up.',
+    tags:['infra'],sprint:'s0',created:1},
+  {id:genId(),col:'next',title:'CSS Variable Contract (tokens.css)',
+    desc:'Define the full --f5-* variable contract: colors, typography, geometry (radius, border-width, cell-padding), motion (transition speeds). Default values that work without any theme applied.',
+    tags:['theme'],sprint:'s0',created:2},
+  {id:genId(),col:'next',title:'Theme Infrastructure',
+    desc:'theme-manager.js: getTheme(), setTheme(), loadFonts(). 8 theme class blocks in tokens.css overriding variables. Body class swap. localStorage persistence of preference.',
+    tags:['theme'],sprint:'s0',created:3},
+  {id:genId(),col:'next',title:'storage.js Wrapper',
+    desc:'localStorage abstraction: get/set with JSON parse/stringify, key prefixing (f5_), error handling for quota exceeded, type-safe getters for settings/history/cache.',
+    tags:['data','infra'],sprint:'s0',created:4},
+  {id:genId(),col:'next',title:'HTML Shell',
+    desc:'index.html with all structural elements: grid container, timer (digits + bar + ASCII variant), masthead (Newspaper), sys-header (Brutalist), settings panel, results overlay. All hidden by default, shown per theme/state.',
+    tags:['ui'],sprint:'s0',created:5},
+  {id:genId(),col:'next',title:'reset.css + Base Layout',
+    desc:'Minimal CSS reset. Base layout: centered game container, responsive max-width, screen routing (setup/game/results/stats). CSS Grid for the 5\u00d75 game grid skeleton.',
+    tags:['ui'],sprint:'s0',created:6},
+
+  // --- UP NEXT: S1 The Grid ---
+  {id:genId(),col:'next',title:'Grid Rendering',
+    desc:'CSS Grid: 1 label column + 5 letter columns, 1 header row + 5 category rows. Category labels (left), letter labels (top). Styled via --f5-* variables. Responsive scaling.',
+    tags:['ui'],sprint:'s1',created:10},
+  {id:genId(),col:'next',title:'Cell Input System',
+    desc:'Click cell to focus. Text input per cell (contenteditable or hidden input). Visual states: empty, focused, filled. Auto-select text on focus for easy overwrite.',
+    tags:['ui'],sprint:'s1',created:11},
+  {id:genId(),col:'next',title:'Keyboard Navigation',
+    desc:'Tab = next letter (right). Enter = next category (down). Shift+Tab = back. Arrow keys for directional movement. Click any cell. Prevent Tab from leaving the grid during play.',
+    tags:['ui'],sprint:'s1',created:12},
+  {id:genId(),col:'next',title:'Cell Visual States',
+    desc:'Empty, hover, focused/active, filled, locked (post-timer), valid (green), invalid (red), empty-at-end (dim). All driven by CSS classes + --f5-* variables. Theme-scoped overrides.',
+    tags:['ui','theme'],sprint:'s1',created:13},
+
+  // --- BACKLOG: S2 The Clock ---
+  {id:genId(),col:'backlog',title:'Wall-Clock Timer Core',
+    desc:'timer.js: store end time via Date.now() + duration. Compute remaining on each tick via requestAnimationFrame or setTimeout(100ms). Never use setInterval counter. onTick and onComplete callbacks.',
+    tags:['core'],sprint:'s2',created:20},
+  {id:genId(),col:'backlog',title:'Timer Display',
+    desc:'Digits (MM:SS format). Depleting progress bar. ASCII block bar variant for Brutalist theme. Show/hide per theme via CSS. Digits update from timer.js onTick.',
+    tags:['ui'],sprint:'s2',created:21},
+  {id:genId(),col:'backlog',title:'Timer States & Urgency',
+    desc:'Three visual states: running (>60s, normal), warning (<60s, accent color), critical (<15s, danger color + pulse animation). CSS classes toggled by timer.js. Theme-scoped animations.',
+    tags:['ui','core'],sprint:'s2',created:22},
+  {id:genId(),col:'backlog',title:'Visibility Change Handling',
+    desc:'document.visibilitychange listener. On tab return: immediately recalculate remaining time from wall clock. Timer display may jump (correct behavior). Handle edge case: timer expired while tab hidden.',
+    tags:['core'],sprint:'s2',created:23},
+  {id:genId(),col:'backlog',title:'Grid Lock on Expiry',
+    desc:'When timer hits zero: disable all cell inputs, add "locked" class to grid, trigger validation flow. Start/restart button to begin a new game.',
+    tags:['ui','core'],sprint:'s2',created:24},
+
+  // --- BACKLOG: S3 Game Engine ---
+  {id:genId(),col:'backlog',title:'Category Pool',
+    desc:'categories.js: ~60 curated categories across 3 tiers (Casual/Standard/Expert), tagged by domain (geography, science, arts, etc.). Exported as ES module. No network dependency.',
+    tags:['data'],sprint:'s3',created:30},
+  {id:genId(),col:'backlog',title:'Category Selection Logic',
+    desc:'Select 5 categories per game: no two from same domain tag. Tier distribution by difficulty mode: Casual (3/2/0), Standard (1/3/1), Expert (0/2/3). Shuffle within constraints.',
+    tags:['core'],sprint:'s3',created:31},
+  {id:genId(),col:'backlog',title:'Letter Selection',
+    desc:'Draw 5 unique letters. Default pool: A\u2013Z excluding Q, X, Z. Expert mode includes all 26. Optional weighted selection favoring medium-difficulty letters. Guggenheim variant: use letters from a 5-letter word.',
+    tags:['core'],sprint:'s3',created:32},
+  {id:genId(),col:'backlog',title:'Game State Machine',
+    desc:'game-engine.js: newGame(), getGrid(), submitAnswers(), calculateScore(). Pure functions, zero side effects, zero DOM. States: setup \u2192 playing \u2192 validating \u2192 scored. Returns new state objects.',
+    tags:['core'],sprint:'s3',created:33},
+  {id:genId(),col:'backlog',title:'Wire Up Full Game Flow',
+    desc:'New Game button \u2192 select categories + letters \u2192 render grid \u2192 start timer \u2192 play \u2192 lock on expiry. Playable end-to-end at this point (self-scored).',
+    tags:['core','ui'],sprint:'s3',created:34},
+
+  // --- BACKLOG: S4 AI Integration ---
+  {id:genId(),col:'backlog',title:'API Key Setup Screen',
+    desc:'First-run screen: Anthropic API key input, save to localStorage, test connection with a ping. Show model name and confirmation. Skip if key already saved. Settings gear to change later.',
+    tags:['ai','ui'],sprint:'s4',created:40},
+  {id:genId(),col:'backlog',title:'Claude API Client',
+    desc:'claude-api.js: direct browser fetch to api.anthropic.com/v1/messages. Headers: anthropic-dangerous-direct-browser-access, x-api-key, anthropic-version. Model: claude-haiku-4-5. Temperature: 0.',
+    tags:['ai'],sprint:'s4',created:41},
+  {id:genId(),col:'backlog',title:'Validation Prompt Builder',
+    desc:'validator.js: build system prompt (keyword rules, article handling, surname rule, JSON-only response). Build user message from grid state (25 answer objects). Parse JSON response. Handle malformed responses.',
+    tags:['ai'],sprint:'s4',created:42},
+  {id:genId(),col:'backlog',title:'Validation Cache',
+    desc:'Cache key: lowercase(category|letter|answer). Store {valid, explanation, canonical} in localStorage under f5_validation_cache. Check cache before API call. Only send uncached answers. Merge results.',
+    tags:['ai','data'],sprint:'s4',created:43},
+  {id:genId(),col:'backlog',title:'Validating Overlay & Reveal',
+    desc:'"Validating..." overlay after timer expires. Single API call. On response: cell-by-cell reveal animation (staggered, top-left to bottom-right). Valid = green highlight. Invalid = red + explanation tooltip.',
+    tags:['ai','ui'],sprint:'s4',created:44},
+  {id:genId(),col:'backlog',title:'Self-Score Fallback',
+    desc:'If API unavailable (down, rate limited, no key): show self-scoring UI with checkboxes per cell. Player marks valid/invalid. Score flagged as "self-scored" in history. Retry with exponential backoff (1s, 2s, 4s, max 3).',
+    tags:['ai','core'],sprint:'s4',created:45},
+
+  // --- BACKLOG: S5 Scoring & Results ---
+  {id:genId(),col:'backlog',title:'n\u00b2 Score Calculator',
+    desc:'calculateScore() in game-engine.js: count valid answers per row (General) and per column (Special). Square each. Sum rows\u00b2 + columns\u00b2. Return breakdown: {rows: [scores], cols: [scores], general, special, total, max: 250}.',
+    tags:['core'],sprint:'s5',created:50},
+  {id:genId(),col:'backlog',title:'Results Screen',
+    desc:'Post-validation results view: completed grid with valid/invalid coloring, AI explanations on hover/tap. Score breakdown: Special Score + General Score = Total. Row/column subtotals visible.',
+    tags:['ui'],sprint:'s5',created:51},
+  {id:genId(),col:'backlog',title:'Score Reveal Animation',
+    desc:'Animated score counter: numbers count up from 0. Row scores appear left-to-right, column scores top-to-bottom. Total reveals last with emphasis. Theme-scoped animation styles.',
+    tags:['ui','polish'],sprint:'s5',created:52},
+
+  // --- BACKLOG: S6 Persistence & Stats ---
+  {id:genId(),col:'backlog',title:'Game History',
+    desc:'Save completed games to f5_history in localStorage: id, date, categories, letters, grid with results, score breakdown, difficulty, selfScored flag. ~2KB per game, supports ~2000 games before limits.',
+    tags:['data'],sprint:'s6',created:60},
+  {id:genId(),col:'backlog',title:'Stats Aggregation',
+    desc:'stats.js: compute from history array. Total games, avg score, best score, avg fill rate, best/worst categories, letter difficulty analysis, streaks (consecutive days played).',
+    tags:['data','core'],sprint:'s6',created:61},
+  {id:genId(),col:'backlog',title:'History Screen',
+    desc:'Scrollable list of past games with date, score, difficulty. Tap to review: shows the full grid with results, AI explanations, score breakdown. Filter by date or difficulty.',
+    tags:['ui'],sprint:'s6',created:62},
+  {id:genId(),col:'backlog',title:'Stats Dashboard',
+    desc:'Visual stats: total games, avg score, best score, current streak. Bar chart or sparkline of score trend. Most/least successful categories. Most/least successful letters.',
+    tags:['ui'],sprint:'s6',created:63},
+
+  // --- BACKLOG: S7 Themes & Polish ---
+  {id:genId(),col:'backlog',title:'Retro Bookshelf Theme',
+    desc:'Full CSS implementation: Playfair Display + Libre Franklin + Courier Prime. Warm parchment palette. Ruled-line empty cells. Gold tab hover. Stamp animation on cell fill.',
+    tags:['theme'],sprint:'s7',created:70},
+  {id:genId(),col:'backlog',title:'Minimal Modernist Theme',
+    desc:'Inter only. Pure white + near-black + Rams orange (accent on interaction only). Hairline borders. Sequential grid fade-in on game start. Blinking colon on timer.',
+    tags:['theme'],sprint:'s7',created:71},
+  {id:genId(),col:'backlog',title:'Neon Arcade Theme',
+    desc:'Orbitron + Exo 2. Dark void bg. Cyan/magenta/lime neon palette. Glowing grid lines + text-shadow. Neon-tube-ignition flicker on cell fill. CRT scan-line on critical timer.',
+    tags:['theme'],sprint:'s7',created:72},
+  {id:genId(),col:'backlog',title:'Library Study Theme',
+    desc:'EB Garamond + Source Sans 3. Dark mahogany/brass palette. Desk lamp radial gradient on game start. Brass frame on timer (mantel clock). Italic grid text (ledger feel).',
+    tags:['theme'],sprint:'s7',created:73},
+  {id:genId(),col:'backlog',title:'Pop Art Theme',
+    desc:'Bangers + Archivo. Bold yellow/blue/red + thick black borders. CSS Ben-Day dot pattern on empty cells. Speech-bubble timer. Comic burst starburst on cell fill. Shake animation at critical.',
+    tags:['theme'],sprint:'s7',created:74},
+  {id:genId(),col:'backlog',title:'Newspaper Theme',
+    desc:'Playfair Display 900 + Source Serif 4. Newsprint palette. Masthead with faux Vol/No dateline. Crossword grid borders. Italic pencil-written answers. "Filed by" byline on completion.',
+    tags:['theme'],sprint:'s7',created:75},
+  {id:genId(),col:'backlog',title:'Botanical Theme',
+    desc:'Cormorant Garamond + Lato. Soft greens/cream/terracotta. 8px radius organic edges. Vine progress bar. Fern-frond watermark SVG at 4% opacity. Berry dot blooms on completion.',
+    tags:['theme'],sprint:'s7',created:76},
+  {id:genId(),col:'backlog',title:'Brutalist Digital Theme',
+    desc:'Space Mono only. Black/white + pure blue/red. 4px borders, 0 radius. Instant hover inversion (no transition). ASCII progress bar. [SYS] header. Character count in filled cells.',
+    tags:['theme'],sprint:'s7',created:77},
+  {id:genId(),col:'backlog',title:'Theme Selector UI',
+    desc:'Settings screen or quick-toggle with theme previews (mini grid or color swatches). Live preview on hover. Persist to localStorage. Accessible via gear icon or keyboard shortcut.',
+    tags:['theme','ui'],sprint:'s7',created:78},
+  {id:genId(),col:'backlog',title:'Responsive Polish',
+    desc:'Test all screens at phone/tablet/desktop breakpoints. Touch-friendly cell inputs on mobile. Adjust grid cell sizing. Timer repositioning. Settings drawer vs modal by viewport.',
+    tags:['polish'],sprint:'s7',created:79},
+  {id:genId(),col:'backlog',title:'Settings Screen',
+    desc:'Difficulty mode (Casual/Standard/Expert), timer length (3/5/7 min), theme selector, hard letters toggle (Q/X/Z), sound toggle. All persisted to f5_settings in localStorage.',
+    tags:['ui'],sprint:'s7',created:80},
+  {id:genId(),col:'backlog',title:'Favicon',
+    desc:'Simple F5 mark as SVG favicon. Minimal, works at 16px and 32px. Matches the product identity.',
+    tags:['polish'],sprint:'s7',created:81},
+
+  // --- FUTURE ---
+  {id:genId(),col:'future',title:'Daily Challenge Mode',
+    desc:'Same grid for every player every day (seeded RNG from date). One attempt only. Shareable results grid (pattern of hits/misses, no spoilers). Streak tracking.',
+    tags:['core','ui'],sprint:'',created:90},
+  {id:genId(),col:'future',title:'Guggenheim Variant',
+    desc:'Use a real 5-letter word for column letters instead of random draws. Curated word pool (BRAIN, MATCH, QUEST, FLAME, etc.). No repeated letters. Word becomes the puzzle identity.',
+    tags:['core'],sprint:'',created:91},
+  {id:genId(),col:'future',title:'Appeal System',
+    desc:'After validation, disputed cells get an "Appeal" button. Appeal sends one answer to Sonnet (not Haiku) with extra context for reconsideration. One appeal per cell per game.',
+    tags:['ai'],sprint:'',created:92},
+  {id:genId(),col:'future',title:'Sound Design',
+    desc:'Web Audio API (not <audio> tags). Timer tick in last 10 seconds. Valid answer ding. Invalid buzz. Game start/end chimes. Optional, default off. Per-theme sound palette.',
+    tags:['polish'],sprint:'',created:93},
+  {id:genId(),col:'future',title:'Supabase Integration',
+    desc:'Persistent stats, cross-device sync. Supabase JS SDK via CDN. Users table, game history table. localStorage as offline fallback. Auth via email or anonymous.',
+    tags:['infra','data'],sprint:'',created:94},
+  {id:genId(),col:'future',title:'Async Multiplayer',
+    desc:'Share a grid link. Recipient plays the same categories + letters. Compare scores side-by-side. No real-time needed \u2014 just shared game state in Supabase.',
+    tags:['core','infra'],sprint:'',created:95},
+  {id:genId(),col:'future',title:'Real-Time Head-to-Head',
+    desc:'Supabase Realtime for synchronized timer + grid lock. Server-side validation via Vercel serverless function (hides API key). Simultaneous reveal. Requires Phase 3 architecture.',
+    tags:['core','infra'],sprint:'',created:96},
+  {id:genId(),col:'future',title:'Leaderboards',
+    desc:'Daily, weekly, all-time. Global and friends-only. Score, fill rate, streak. Requires Supabase + auth.',
+    tags:['ui','infra'],sprint:'',created:97},
+  {id:genId(),col:'future',title:'Accessibility Audit',
+    desc:'WCAG AA compliance. Screen reader testing for grid navigation. Keyboard-only play verification. ARIA labels on cells. Focus management. High-contrast theme variant.',
+    tags:['polish'],sprint:'',created:98},
+  {id:genId(),col:'future',title:'Deploy to GitHub Pages',
+    desc:'Git repo, push to main, enable Pages. Fully static \u2014 no server needed. Player\u2019s own API key in their browser.',
+    tags:['infra'],sprint:'',created:99},
+];
+
+var MAX_CARDS = 200;
+var VALID_COLS = ['done','next','backlog','future'];
+
+function genId(){return Math.random().toString(36).slice(2,10)}
+
+// --- STATE ---
+var cards = loadCards();
+var editingId = null;
+
+function validateCards(parsed){
+  if(!Array.isArray(parsed)) return null;
+  return parsed.filter(function(c){
+    return c && typeof c==='object'
+      && typeof c.title==='string'
+      && VALID_COLS.indexOf(c.col)!==-1
+      && typeof c.created==='number';
+  }).map(function(c){return {
+    id: typeof c.id==='string' ? c.id.replace(/[^a-z0-9]/gi,'') : genId(),
+    title: c.title,
+    desc: typeof c.desc==='string' ? c.desc : '',
+    col: c.col,
+    tags: Array.isArray(c.tags) ? c.tags.filter(function(t){return typeof t==='string'}) : [],
+    sprint: typeof c.sprint==='string' ? c.sprint : '',
+    created: c.created,
+  }}).slice(0,MAX_CARDS);
+}
+
+function loadCards(){
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      var valid = validateCards(JSON.parse(raw));
+      if(valid && valid.length) return valid;
+    }
+  } catch(e){}
+  return DEFAULT_CARDS.slice();
+}
+
+function save(){
+  try{localStorage.setItem(STORAGE_KEY, JSON.stringify(cards))}
+  catch(e){console.warn('Save failed:',e)}
+}
+
+// --- RENDER ---
+function renderCard(c, col){
+  var colorClass = col==='done' ? 'color-done' : (c.tags.length ? (TAG_COLORS[c.tags[0]]||'') : '');
+  return '<div class="card" draggable="true" data-id="'+esc(c.id)+'">'
+    + (colorClass ? '<div class="card-color '+colorClass+'"></div>' : '')
+    + '<div class="card-actions"><button class="edit-btn" title="Edit">\u270E</button></div>'
+    + '<div class="card-title">'+esc(c.title)+'</div>'
+    + (c.desc ? '<div class="card-desc">'+esc(c.desc)+'</div>' : '')
+    + '<div class="card-tags">'+c.tags.map(function(t){
+        var def = TAG_DEFS.find(function(d){return d.id===t});
+        return def ? '<span class="tag '+def.cls+'">'+def.label+'</span>' : '';
+      }).join('')+'</div>'
+    + '</div>';
+}
+
+function render(){
+  VALID_COLS.forEach(function(col){
+    var list = document.getElementById('list-'+col);
+    var colCards = cards.filter(function(c){return c.col===col}).sort(function(a,b){return a.created-b.created});
+    document.getElementById('count-'+col).textContent = colCards.length;
+
+    var sprintGroups = {};
+    var ungrouped = [];
+    colCards.forEach(function(c){
+      if(c.sprint){
+        if(!sprintGroups[c.sprint]) sprintGroups[c.sprint] = [];
+        sprintGroups[c.sprint].push(c);
+      } else {
+        ungrouped.push(c);
+      }
+    });
+
+    var hasSprints = Object.keys(sprintGroups).length > 0;
+    var html = '';
+
+    SPRINT_DEFS.forEach(function(s){
+      if(sprintGroups[s.id] && sprintGroups[s.id].length){
+        html += '<div class="sprint-header">'
+          + '<span class="sprint-badge" style="background:'+s.color+'">'+esc(s.label)+'</span>'
+          + '<span class="sprint-line"></span>'
+          + '<span class="sprint-count">'+sprintGroups[s.id].length+'</span>'
+          + '</div>';
+        sprintGroups[s.id].forEach(function(c){
+          html += renderCard(c, col);
+        });
+      }
+    });
+
+    if(ungrouped.length){
+      if(hasSprints){
+        html += '<div class="sprint-header">'
+          + '<span class="sprint-badge" style="background:#9b9bae">General</span>'
+          + '<span class="sprint-line"></span>'
+          + '<span class="sprint-count">'+ungrouped.length+'</span>'
+          + '</div>';
+      }
+      ungrouped.forEach(function(c){
+        html += renderCard(c, col);
+      });
+    }
+
+    list.innerHTML = html;
+  });
+  initDrag();
+}
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// --- DRAG & DROP ---
+function initDrag(){
+  document.querySelectorAll('.card[draggable]').forEach(function(card){
+    card.addEventListener('dragstart',function(e){
+      e.dataTransfer.setData('text/plain',card.dataset.id);
+      e.dataTransfer.effectAllowed='move';
+      requestAnimationFrame(function(){card.classList.add('dragging')});
+    });
+    card.addEventListener('dragend',function(){
+      card.classList.remove('dragging');
+      document.querySelectorAll('.card.drag-over,.drop-zone.active').forEach(function(el){
+        el.classList.remove('drag-over','active');
+      });
+    });
+    card.addEventListener('dragover',function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      document.querySelectorAll('.card.drag-over').forEach(function(el){el.classList.remove('drag-over')});
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave',function(){card.classList.remove('drag-over')});
+    card.addEventListener('drop',function(e){
+      e.preventDefault();
+      var dragId=e.dataTransfer.getData('text/plain');
+      var targetId=card.dataset.id;
+      if(dragId===targetId) return;
+      var dragCard=cards.find(function(c){return c.id===dragId});
+      var targetCard=cards.find(function(c){return c.id===targetId});
+      if(!dragCard||!targetCard) return;
+      dragCard.col=targetCard.col;
+      dragCard.created=targetCard.created-0.5;
+      save();render();
+    });
+  });
+  document.querySelectorAll('.drop-zone').forEach(function(zone){
+    zone.addEventListener('dragover',function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      zone.classList.add('active');
+    });
+    zone.addEventListener('dragleave',function(){zone.classList.remove('active')});
+    zone.addEventListener('drop',function(e){
+      e.preventDefault();
+      zone.classList.remove('active');
+      var dragId=e.dataTransfer.getData('text/plain');
+      var col=zone.dataset.col;
+      var dragCard=cards.find(function(c){return c.id===dragId});
+      if(!dragCard) return;
+      dragCard.col=col;
+      var colCards=cards.filter(function(c){return c.col===col});
+      var maxCreated=colCards.length?colCards.reduce(function(m,c){return Math.max(m,c.created)},0):Date.now();
+      dragCard.created=maxCreated+1;
+      save();render();
+    });
+  });
+}
+
+// --- MODAL ---
+var modalCol = 'backlog';
+
+function openModal(col, cardId){
+  editingId = cardId || null;
+  modalCol = col || 'backlog';
+  var overlay = document.getElementById('modal-overlay');
+  var titleEl = document.getElementById('m-title');
+  var descEl = document.getElementById('m-desc');
+  var colEl = document.getElementById('m-col');
+  var sprintEl = document.getElementById('m-sprint');
+  var delBtn = document.getElementById('m-delete');
+  var heading = document.getElementById('modal-title');
+  var tagsWrap = document.getElementById('m-tags');
+  var selectedTags = [];
+
+  sprintEl.innerHTML = '<option value="">(none)</option>'
+    + SPRINT_DEFS.map(function(s){ return '<option value="'+s.id+'">'+esc(s.label)+'</option>'; }).join('');
+
+  if(editingId){
+    var card = cards.find(function(c){return c.id===editingId});
+    if(!card) return;
+    heading.textContent = 'Edit Card';
+    titleEl.value = card.title;
+    descEl.value = card.desc || '';
+    colEl.value = card.col;
+    sprintEl.value = card.sprint || '';
+    selectedTags = (card.tags||[]).slice();
+    delBtn.style.display = 'inline-block';
+  } else {
+    heading.textContent = 'Add Card';
+    titleEl.value = '';
+    descEl.value = '';
+    colEl.value = modalCol;
+    sprintEl.value = '';
+    selectedTags = [];
+    delBtn.style.display = 'none';
+  }
+
+  tagsWrap.innerHTML = TAG_DEFS.map(function(t){
+    return '<span class="tag '+t.cls+(selectedTags.indexOf(t.id)!==-1?' selected':'')+'" data-tag="'+t.id+'">'+t.label+'</span>';
+  }).join('');
+
+  tagsWrap.querySelectorAll('.tag').forEach(function(tag){
+    tag.addEventListener('click',function(){tag.classList.toggle('selected')});
+  });
+
+  overlay.classList.add('open');
+  setTimeout(function(){titleEl.focus()},100);
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null;
+}
+
+function saveCard(){
+  var title = document.getElementById('m-title').value.trim();
+  if(!title) return;
+  var desc = document.getElementById('m-desc').value.trim();
+  var col = document.getElementById('m-col').value;
+  var sprint = document.getElementById('m-sprint').value;
+  var tags = Array.from(document.querySelectorAll('#m-tags .tag.selected')).map(function(t){return t.dataset.tag});
+
+  if(editingId){
+    var card = cards.find(function(c){return c.id===editingId});
+    if(card){
+      card.title = title;
+      card.desc = desc;
+      card.col = col;
+      card.sprint = sprint;
+      card.tags = tags;
+    }
+  } else {
+    if(cards.length>=MAX_CARDS){alert('Card limit ('+MAX_CARDS+') reached.');return;}
+    var colCards = cards.filter(function(c){return c.col===col});
+    var maxCreated = colCards.length ? colCards.reduce(function(m,c){return Math.max(m,c.created)},0) : Date.now();
+    cards.push({id:genId(),col:col,title:title,desc:desc,tags:tags,sprint:sprint,created:maxCreated+1});
+  }
+  save();render();closeModal();
+}
+
+function deleteCard(){
+  if(!editingId) return;
+  if(!confirm('Delete this card?')) return;
+  cards = cards.filter(function(c){return c.id!==editingId});
+  save();render();closeModal();
+}
+
+document.getElementById('modal-overlay').addEventListener('click',function(e){
+  if(e.target===e.currentTarget) closeModal();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') closeModal();
+});
+
+// --- EXPORT ---
+function exportMarkdown(){
+  var COL_LABELS = {done:'Done',next:'Up Next',backlog:'Backlog',future:'Future'};
+  var md = '# F5 \u2014 Kanban\n\n';
+  VALID_COLS.forEach(function(col){
+    var colCards = cards.filter(function(c){return c.col===col}).sort(function(a,b){return a.created-b.created});
+    if(!colCards.length) return;
+    md += '## '+COL_LABELS[col]+'\n';
+
+    var sprintGroups = {};
+    var ungrouped = [];
+    colCards.forEach(function(c){
+      if(c.sprint){
+        if(!sprintGroups[c.sprint]) sprintGroups[c.sprint] = [];
+        sprintGroups[c.sprint].push(c);
+      } else {
+        ungrouped.push(c);
+      }
+    });
+
+    SPRINT_DEFS.forEach(function(s){
+      if(sprintGroups[s.id] && sprintGroups[s.id].length){
+        md += '\n### '+s.label+'\n';
+        sprintGroups[s.id].forEach(function(c){
+          var tags = (c.tags||[]).map(function(t){
+            var def=TAG_DEFS.find(function(d){return d.id===t});
+            return def?'`'+def.label+'`':'';
+          }).filter(Boolean).join(' ');
+          md += '- **'+c.title+'**'+(tags?' '+tags:'')+(c.desc?'\n  '+c.desc:'')+'\n';
+        });
+      }
+    });
+
+    if(ungrouped.length){
+      ungrouped.forEach(function(c){
+        var tags = (c.tags||[]).map(function(t){
+          var def=TAG_DEFS.find(function(d){return d.id===t});
+          return def?'`'+def.label+'`':'';
+        }).filter(Boolean).join(' ');
+        md += '- **'+c.title+'**'+(tags?' '+tags:'')+(c.desc?'\n  '+c.desc:'')+'\n';
+      });
+    }
+    md += '\n';
+  });
+  navigator.clipboard.writeText(md).then(function(){
+    var btn = document.getElementById('btn-export');
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(function(){btn.textContent=orig},1500);
+  });
+}
+
+// --- EVENT DELEGATION ---
+document.getElementById('btn-export').addEventListener('click', exportMarkdown);
+document.getElementById('btn-add-global').addEventListener('click', function(){openModal()});
+document.getElementById('m-delete').addEventListener('click', deleteCard);
+document.getElementById('m-cancel').addEventListener('click', closeModal);
+document.getElementById('m-save').addEventListener('click', saveCard);
+
+document.querySelectorAll('.col-add[data-add-col]').forEach(function(btn){
+  btn.addEventListener('click', function(){openModal(btn.dataset.addCol)});
+});
+
+document.querySelector('.board').addEventListener('click', function(e){
+  var editBtn = e.target.closest('.edit-btn');
+  if(editBtn){
+    var cardEl = editBtn.closest('.card');
+    if(cardEl) openModal(null, cardEl.dataset.id);
+  }
+});
+
+// --- INIT ---
+render();
+</script>
+</body>
+</html>

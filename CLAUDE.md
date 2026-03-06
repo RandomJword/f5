@@ -30,10 +30,13 @@ Uses the original game's n² formula — NOT flat points:
 ## AI Validation
 
 - **Model:** `claude-haiku-4-5` at `temperature: 0`
-- **Timing:** Batch all 25 answers in one API call AFTER timer expires. Not real-time.
-- **Cache:** `category|letter|answer` → result in localStorage. Facts don't expire.
+- **Timing:** Batch non-empty answers in one API call AFTER timer expires. Not real-time. Empty cells marked invalid client-side.
+- **Cache:** `category|letter|normalize(answer)|strictness` → result in localStorage. Normalize = trim + lowercase. Facts don't expire.
+- **Strictness:** Player-configurable strict/lenient mode. Adjusts the system prompt wording. Cache key includes strictness to prevent cross-contamination.
 - **Fallback:** Self-scoring with checkboxes if API unavailable.
 - **Keyword rules:** Surname for people, ignore articles (The/A/An) for titles, first word for places.
+- **Crash recovery:** Save game state to localStorage before making the validation API call. On reload, detect "validating" state and re-submit.
+- **Response verification:** After parsing, check every submitted ID has a result. Missing IDs → one retry, then self-score fallback for those cells.
 
 ## Key Patterns
 

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F5 Spike 3 — Category Viability</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #0c0c0e; --surface: #16161a; --border: #2a2a32; --text: #e8e6e3; --muted: #8a8a96; --accent: #6c63ff; --green: #4ecdc4; --red: #ff6b6b; --yellow: #ffd93d; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; max-width: 960px; margin: 0 auto; line-height: 1.6; }
+h1 { color: var(--accent); font-size: 1.5rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+input, select { width: 100%; padding: 0.6rem 0.8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem; }
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+.row { display: flex; gap: 1rem; }
+.row > * { flex: 1; }
+button { padding: 0.6rem 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.progress { margin-top: 1rem; font-family: monospace; font-size: 0.85rem; color: var(--muted); }
+.summary { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border-radius: 8px; }
+.summary h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+.metric { display: inline-block; margin-right: 2rem; margin-bottom: 0.5rem; }
+.metric-value { font-size: 1.5rem; font-weight: 700; }
+.metric-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+.grid-result { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.grid-result h4 { font-size: 0.9rem; margin-bottom: 0.75rem; }
+.grid-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; font-family: monospace; }
+.grid-table th { padding: 0.4rem 0.5rem; background: var(--bg); color: var(--accent); font-weight: 600; text-align: center; }
+.grid-table td { padding: 0.4rem 0.5rem; border: 1px solid var(--border); text-align: center; }
+.cell-ok { background: rgba(78,205,196,0.1); color: var(--green); }
+.cell-dead { background: rgba(255,107,107,0.15); color: var(--red); }
+.cell-hard { background: rgba(255,217,61,0.1); color: var(--yellow); }
+.info { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; font-size: 0.85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>Spike 3: Category Viability</h1>
+<p class="subtitle">How many cells in a random F5 grid are genuinely impossible? Target: &lt;5% dead cells on Standard mode.</p>
+
+<label for="apiKey">Anthropic API Key</label>
+<input type="password" id="apiKey" placeholder="sk-ant-..." />
+
+<div class="row">
+  <div>
+    <label for="gridCount">Grids to test</label>
+    <select id="gridCount">
+      <option value="3">3 (quick check)</option>
+      <option value="5" selected>5 (recommended)</option>
+      <option value="10">10 (thorough)</option>
+      <option value="20">20 (full spike spec)</option>
+    </select>
+  </div>
+  <div>
+    <label for="mode">Letter mode</label>
+    <select id="mode">
+      <option value="standard" selected>Standard (no Q, X, Z)</option>
+      <option value="expert">Expert (all letters)</option>
+    </select>
+  </div>
+</div>
+
+<button id="runBtn" onclick="runSpike()">Run Spike</button>
+
+<div class="progress" id="progress"></div>
+<div id="summary"></div>
+<div id="results"></div>
+
+<div class="info">
+  <strong>What this tests:</strong> We generate random 5x5 grids from the proposed category pool
+  and ask Claude to evaluate whether each cell has a valid answer. This identifies problematic
+  category/letter combos before we finalize the pool. Dead cells frustrate players.
+</div>
+
+<script>
+// Proposed category pool (~60 categories with tags)
+const CATEGORIES = [
+  { name: "Animals", tag: "nature" },
+  { name: "Birds", tag: "nature" },
+  { name: "Flowers", tag: "nature" },
+  { name: "Trees", tag: "nature" },
+  { name: "Fruits", tag: "food" },
+  { name: "Vegetables", tag: "food" },
+  { name: "Spices & Herbs", tag: "food" },
+  { name: "Cheeses", tag: "food" },
+  { name: "Countries", tag: "geography" },
+  { name: "World Cities", tag: "geography" },
+  { name: "U.S. States", tag: "geography" },
+  { name: "Rivers", tag: "geography" },
+  { name: "Mountains", tag: "geography" },
+  { name: "Islands", tag: "geography" },
+  { name: "Deserts", tag: "geography" },
+  { name: "Lakes", tag: "geography" },
+  { name: "Movies", tag: "entertainment" },
+  { name: "TV Shows", tag: "entertainment" },
+  { name: "Musical Artists", tag: "entertainment" },
+  { name: "Songs", tag: "entertainment" },
+  { name: "Broadway Musicals", tag: "entertainment" },
+  { name: "Video Games", tag: "entertainment" },
+  { name: "Board Games", tag: "entertainment" },
+  { name: "Authors", tag: "arts" },
+  { name: "Painters", tag: "arts" },
+  { name: "Sculptors", tag: "arts" },
+  { name: "Novels", tag: "arts" },
+  { name: "Poets", tag: "arts" },
+  { name: "U.S. Presidents", tag: "history" },
+  { name: "Historical Figures", tag: "history" },
+  { name: "Ancient Civilizations", tag: "history" },
+  { name: "Wars & Conflicts", tag: "history" },
+  { name: "Scientists", tag: "science" },
+  { name: "Chemical Elements", tag: "science" },
+  { name: "Inventions", tag: "science" },
+  { name: "Diseases & Conditions", tag: "science" },
+  { name: "Planets & Moons", tag: "science" },
+  { name: "Olympic Sports", tag: "sports" },
+  { name: "Team Sports", tag: "sports" },
+  { name: "Athletes", tag: "sports" },
+  { name: "Car Brands", tag: "things" },
+  { name: "Clothing Items", tag: "things" },
+  { name: "Musical Instruments", tag: "things" },
+  { name: "Tools", tag: "things" },
+  { name: "Currencies", tag: "things" },
+  { name: "Languages", tag: "things" },
+  { name: "Dog Breeds", tag: "nature" },
+  { name: "Gemstones", tag: "things" },
+  { name: "Dances", tag: "arts" },
+  { name: "Mythological Figures", tag: "history" },
+  { name: "Professions", tag: "things" },
+  { name: "Fabrics & Textiles", tag: "things" },
+  { name: "Cocktails & Drinks", tag: "food" },
+  { name: "Pasta Shapes", tag: "food" },
+  { name: "Philosophers", tag: "arts" },
+  { name: "Composers", tag: "arts" },
+  { name: "Dinosaurs", tag: "science" },
+  { name: "Bodies of Water", tag: "geography" },
+  { name: "National Parks", tag: "geography" },
+  { name: "Cartoon Characters", tag: "entertainment" },
+];
+
+const STANDARD_LETTERS = 'ABCDEFGHIJKLMNOPRSTUVWY'.split('');
+const EXPERT_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateGrid(mode) {
+  // Pick 5 categories (no two from same tag)
+  const shuffled = shuffle(CATEGORIES);
+  const picked = [];
+  const usedTags = new Set();
+  for (const cat of shuffled) {
+    if (!usedTags.has(cat.tag) && picked.length < 5) {
+      picked.push(cat);
+      usedTags.add(cat.tag);
+    }
+  }
+  // If we couldn't get 5 unique tags, fill from remaining
+  if (picked.length < 5) {
+    for (const cat of shuffled) {
+      if (!picked.includes(cat) && picked.length < 5) {
+        picked.push(cat);
+      }
+    }
+  }
+
+  const pool = mode === 'expert' ? EXPERT_LETTERS : STANDARD_LETTERS;
+  const letters = shuffle(pool).slice(0, 5);
+
+  return { categories: picked, letters };
+}
+
+async function evaluateGrid(key, grid) {
+  const cells = [];
+  for (const cat of grid.categories) {
+    for (const letter of grid.letters) {
+      cells.push({ category: cat.name, letter });
+    }
+  }
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 3000,
+      temperature: 0,
+      system: `For each category/letter pair, evaluate whether a reasonably knowledgeable person could name a valid answer. Respond with a JSON array only. No markdown fences. Each element: {"category":"...","letter":"...","feasible":true/false,"difficulty":"easy"|"medium"|"hard","example":"..."}. "feasible" means at least one real answer exists. "hard" means most people wouldn't know one.`,
+      messages: [{
+        role: 'user',
+        content: `Evaluate these 25 cells:\n${JSON.stringify(cells)}`,
+      }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`API ${res.status}: ${err.error?.message || JSON.stringify(err)}`);
+  }
+
+  const data = await res.json();
+  const text = data.content[0].text.trim();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '');
+    return JSON.parse(cleaned);
+  }
+}
+
+async function runSpike() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) { alert('Enter your API key'); return; }
+
+  const gridCount = parseInt(document.getElementById('gridCount').value);
+  const mode = document.getElementById('mode').value;
+  const btn = document.getElementById('runBtn');
+  const progress = document.getElementById('progress');
+  const summaryDiv = document.getElementById('summary');
+  const resultsDiv = document.getElementById('results');
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  summaryDiv.innerHTML = '';
+  resultsDiv.innerHTML = '';
+
+  let totalCells = 0;
+  let deadCells = 0;
+  let hardCells = 0;
+  let easyCells = 0;
+  const gridResults = [];
+
+  for (let i = 0; i < gridCount; i++) {
+    progress.textContent = `Evaluating grid ${i + 1}/${gridCount}...`;
+
+    const grid = generateGrid(mode);
+    try {
+      const evaluation = await evaluateGrid(key, grid);
+
+      let gridDead = 0;
+      let gridHard = 0;
+
+      // Build a lookup for rendering
+      const cellMap = {};
+      evaluation.forEach(cell => {
+        const key = `${cell.category}|${cell.letter}`;
+        cellMap[key] = cell;
+        totalCells++;
+        if (!cell.feasible) { deadCells++; gridDead++; }
+        else if (cell.difficulty === 'hard') { hardCells++; gridHard++; }
+        else if (cell.difficulty === 'easy') { easyCells++; }
+      });
+
+      gridResults.push({ grid, cellMap, dead: gridDead, hard: gridHard });
+    } catch (err) {
+      progress.textContent += ` [Error: ${err.message}]`;
+      gridResults.push({ grid, error: err.message });
+    }
+
+    if (i < gridCount - 1) {
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+
+  // Summary
+  const deadRate = totalCells > 0 ? ((deadCells / totalCells) * 100).toFixed(1) : 0;
+  const hardRate = totalCells > 0 ? ((hardCells / totalCells) * 100).toFixed(1) : 0;
+  const deadColor = deadRate < 5 ? 'var(--green)' : deadRate < 15 ? 'var(--yellow)' : 'var(--red)';
+  const target = mode === 'standard' ? '<5%' : '<15%';
+
+  summaryDiv.innerHTML = `
+    <div class="summary">
+      <h3>Results (${mode} mode)</h3>
+      <div class="metric">
+        <div class="metric-value" style="color:${deadColor}">${deadRate}%</div>
+        <div class="metric-label">Dead cells (target: ${target})</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value" style="color:var(--yellow)">${hardRate}%</div>
+        <div class="metric-label">Hard cells</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">${totalCells}</div>
+        <div class="metric-label">Total cells evaluated</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">${deadCells}</div>
+        <div class="metric-label">Impossible cells</div>
+      </div>
+    </div>
+  `;
+
+  // Render each grid
+  let html = '';
+  gridResults.forEach((gr, i) => {
+    if (gr.error) {
+      html += `<div class="grid-result"><h4>Grid ${i + 1} - Error: ${gr.error}</h4></div>`;
+      return;
+    }
+
+    html += `<div class="grid-result">`;
+    html += `<h4>Grid ${i + 1} <span style="color:var(--muted);font-weight:400">(${gr.dead} dead, ${gr.hard} hard)</span></h4>`;
+    html += `<table class="grid-table"><thead><tr><th></th>`;
+    gr.grid.letters.forEach(l => { html += `<th>${l}</th>`; });
+    html += `</tr></thead><tbody>`;
+
+    gr.grid.categories.forEach(cat => {
+      html += `<tr><th style="text-align:left;white-space:nowrap">${cat.name}</th>`;
+      gr.grid.letters.forEach(letter => {
+        const cell = gr.cellMap[`${cat.name}|${letter}`];
+        if (!cell) {
+          html += `<td>?</td>`;
+        } else if (!cell.feasible) {
+          html += `<td class="cell-dead" title="Impossible">X</td>`;
+        } else if (cell.difficulty === 'hard') {
+          html += `<td class="cell-hard" title="${cell.example}">${cell.example || 'H'}</td>`;
+        } else {
+          html += `<td class="cell-ok" title="${cell.example}">${cell.example || 'OK'}</td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+  });
+
+  resultsDiv.innerHTML = html;
+  progress.textContent = `Done. ${gridCount} grids evaluated (${totalCells} cells).`;
+  btn.disabled = false;
+  btn.textContent = 'Run Again';
+}
+</script>
+
+</body>
+</html>

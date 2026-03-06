@@ -1,0 +1,475 @@
+/* F5 Design Tokens — Variable Contract
+   Components reference ONLY var(--f5-*), never hard-coded values.
+   Theme classes on <body> override these variables. */
+
+/* ============================================================
+   DEFAULT THEME: Newspaper
+   ============================================================ */
+:root {
+  /* Colors — surface */
+  --f5-bg: #F2EDE4;
+  --f5-surface: #FAF6EF;
+  --f5-border: #C4BDA8;
+  --f5-border-strong: #1A1A1A;
+
+  /* Colors — text */
+  --f5-text: #1A1A1A;
+  --f5-text-body: #4A4A4A;
+  --f5-text-muted: #8A8A7A;
+
+  /* Colors — accent */
+  --f5-accent: #C8102E;
+  --f5-accent-hover: #A00D24;
+
+  /* Colors — semantic */
+  --f5-valid: #2D6A2D;
+  --f5-invalid: #C8102E;
+  --f5-warning: #B8860B;
+
+  /* Typography — families */
+  --f5-font-heading: 'Playfair Display', Georgia, serif;
+  --f5-font-body: 'Source Serif 4', 'Georgia', serif;
+  --f5-font-mono: 'Courier Prime', 'Courier New', monospace;
+  --f5-font-ui: 'Source Serif 4', 'Georgia', serif;
+
+  /* Typography — sizes */
+  --f5-text-xs: 0.75rem;
+  --f5-text-sm: 0.875rem;
+  --f5-text-base: 1rem;
+  --f5-text-lg: 1.125rem;
+  --f5-text-xl: 1.5rem;
+  --f5-text-2xl: 2rem;
+  --f5-text-3xl: 3rem;
+
+  /* Typography — weights */
+  --f5-weight-normal: 400;
+  --f5-weight-medium: 500;
+  --f5-weight-bold: 700;
+  --f5-weight-black: 900;
+
+  /* Spacing */
+  --f5-space-xs: 0.25rem;
+  --f5-space-sm: 0.5rem;
+  --f5-space-md: 1rem;
+  --f5-space-lg: 1.5rem;
+  --f5-space-xl: 2rem;
+  --f5-space-2xl: 3rem;
+  --f5-space-3xl: 4rem;
+
+  /* Borders */
+  --f5-radius: 0px;
+  --f5-radius-sm: 0px;
+  --f5-radius-lg: 0px;
+  --f5-border-width: 1px;
+  --f5-border-width-thick: 2px;
+
+  /* Shadows */
+  --f5-shadow-sm: none;
+  --f5-shadow-md: none;
+  --f5-shadow-lg: none;
+
+  /* Transitions */
+  --f5-transition-fast: 100ms ease;
+  --f5-transition-base: 200ms ease;
+  --f5-transition-slow: 400ms ease;
+
+  /* Grid-specific */
+  --f5-grid-border: var(--f5-border-strong);
+  --f5-grid-cell-border: var(--f5-border-strong);
+  --f5-grid-cell-bg: var(--f5-surface);
+  --f5-grid-cell-active: #FFF8E7;
+  --f5-grid-cell-filled: var(--f5-surface);
+  --f5-grid-cell-locked: #F0EBE0;
+  --f5-grid-header-bg: var(--f5-bg);
+  --f5-grid-header-text: var(--f5-text);
+
+  /* Timer-specific */
+  --f5-timer-color: var(--f5-text);
+  --f5-timer-warning: var(--f5-accent);
+  --f5-timer-critical: var(--f5-accent);
+  --f5-timer-bar-bg: var(--f5-border);
+  --f5-timer-bar-fill: var(--f5-text);
+
+  /* Button-specific */
+  --f5-btn-bg: var(--f5-text);
+  --f5-btn-text: var(--f5-bg);
+  --f5-btn-hover-bg: #333;
+  --f5-btn-radius: 0px;
+
+  /* Layout */
+  --f5-max-width: 720px;
+  --f5-header-height: 3.5rem;
+}
+
+
+/* ============================================================
+   THEME: Retro Bookshelf
+   ============================================================ */
+body.theme-retro {
+  --f5-bg: #F5E6C8;
+  --f5-surface: #FFF8EE;
+  --f5-border: #D4C4A0;
+  --f5-border-strong: #8B4513;
+
+  --f5-text: #3B2F2F;
+  --f5-text-body: #5C4A3A;
+  --f5-text-muted: #8B7D6B;
+
+  --f5-accent: #C41E3A;
+  --f5-accent-hover: #A0182E;
+
+  --f5-valid: #2D6A2D;
+  --f5-invalid: #C41E3A;
+  --f5-warning: #DAA520;
+
+  --f5-font-heading: 'Playfair Display', Georgia, serif;
+  --f5-font-body: 'Libre Franklin', 'Helvetica Neue', sans-serif;
+  --f5-font-mono: 'Courier Prime', 'Courier New', monospace;
+  --f5-font-ui: 'Libre Franklin', 'Helvetica Neue', sans-serif;
+
+  --f5-radius: 4px;
+  --f5-radius-sm: 2px;
+  --f5-radius-lg: 8px;
+  --f5-border-width: 1px;
+  --f5-border-width-thick: 3px;
+
+  --f5-shadow-sm: 0 1px 3px rgba(59,47,47,0.1);
+  --f5-shadow-md: 0 2px 8px rgba(59,47,47,0.12);
+  --f5-shadow-lg: 0 4px 16px rgba(59,47,47,0.15);
+
+  --f5-grid-border: #8B4513;
+  --f5-grid-cell-border: #D4C4A0;
+  --f5-grid-cell-bg: #FFF8EE;
+  --f5-grid-cell-active: #FFF3DC;
+  --f5-grid-cell-filled: #FFF8EE;
+  --f5-grid-cell-locked: #F0E6D0;
+  --f5-grid-header-bg: #F5E6C8;
+  --f5-grid-header-text: #3B2F2F;
+
+  --f5-timer-bar-fill: #DAA520;
+  --f5-timer-warning: #C41E3A;
+
+  --f5-btn-bg: #8B4513;
+  --f5-btn-text: #FFF8EE;
+  --f5-btn-hover-bg: #6B3410;
+  --f5-btn-radius: 4px;
+}
+
+
+/* ============================================================
+   THEME: Minimal Modernist
+   ============================================================ */
+body.theme-minimal {
+  --f5-bg: #FFFFFF;
+  --f5-surface: #FAFAFA;
+  --f5-border: #D4D4D4;
+  --f5-border-strong: #1A1A1A;
+
+  --f5-text: #1A1A1A;
+  --f5-text-body: #4A4A4A;
+  --f5-text-muted: #999999;
+
+  --f5-accent: #FF4400;
+  --f5-accent-hover: #CC3700;
+
+  --f5-valid: #1A8C1A;
+  --f5-invalid: #FF4400;
+  --f5-warning: #E6A800;
+
+  --f5-font-heading: 'Inter', -apple-system, sans-serif;
+  --f5-font-body: 'Inter', -apple-system, sans-serif;
+  --f5-font-mono: 'Inter', -apple-system, sans-serif;
+  --f5-font-ui: 'Inter', -apple-system, sans-serif;
+
+  --f5-radius: 0px;
+  --f5-radius-sm: 0px;
+  --f5-radius-lg: 0px;
+
+  --f5-shadow-sm: none;
+  --f5-shadow-md: none;
+  --f5-shadow-lg: none;
+
+  --f5-grid-border: transparent;
+  --f5-grid-cell-border: #D4D4D4;
+  --f5-grid-cell-bg: #FFFFFF;
+  --f5-grid-cell-active: #FAFAFA;
+  --f5-grid-cell-filled: #FFFFFF;
+  --f5-grid-cell-locked: #F5F5F5;
+  --f5-grid-header-bg: #FFFFFF;
+  --f5-grid-header-text: #1A1A1A;
+
+  --f5-timer-bar-fill: #1A1A1A;
+
+  --f5-btn-bg: #1A1A1A;
+  --f5-btn-text: #FFFFFF;
+  --f5-btn-hover-bg: #333;
+  --f5-btn-radius: 0px;
+}
+
+
+/* ============================================================
+   THEME: Neon Arcade
+   ============================================================ */
+body.theme-neon {
+  --f5-bg: #0D0D1A;
+  --f5-surface: #12122A;
+  --f5-border: rgba(0, 240, 255, 0.2);
+  --f5-border-strong: rgba(0, 240, 255, 0.5);
+
+  --f5-text: #E0E0FF;
+  --f5-text-body: #B0B0D0;
+  --f5-text-muted: #5A5A8A;
+
+  --f5-accent: #FF00AA;
+  --f5-accent-hover: #CC0088;
+
+  --f5-valid: #B8FF00;
+  --f5-invalid: #FF00AA;
+  --f5-warning: #FFD700;
+
+  --f5-font-heading: 'Orbitron', sans-serif;
+  --f5-font-body: 'Exo 2', sans-serif;
+  --f5-font-mono: 'Orbitron', sans-serif;
+  --f5-font-ui: 'Exo 2', sans-serif;
+
+  --f5-radius: 4px;
+  --f5-radius-sm: 2px;
+  --f5-radius-lg: 8px;
+
+  --f5-shadow-sm: 0 0 8px rgba(0, 240, 255, 0.1);
+  --f5-shadow-md: 0 0 16px rgba(0, 240, 255, 0.15);
+  --f5-shadow-lg: 0 0 32px rgba(0, 240, 255, 0.2), 0 0 64px rgba(0, 240, 255, 0.1);
+
+  --f5-grid-border: rgba(0, 240, 255, 0.4);
+  --f5-grid-cell-border: rgba(0, 240, 255, 0.15);
+  --f5-grid-cell-bg: #12122A;
+  --f5-grid-cell-active: #1A1A3A;
+  --f5-grid-cell-filled: #12122A;
+  --f5-grid-cell-locked: #0D0D1A;
+  --f5-grid-header-bg: #0D0D1A;
+  --f5-grid-header-text: #00F0FF;
+
+  --f5-timer-color: #00F0FF;
+  --f5-timer-bar-fill: #00F0FF;
+  --f5-timer-bar-bg: #1A1A3A;
+  --f5-timer-warning: #FF00AA;
+  --f5-timer-critical: #B8FF00;
+
+  --f5-btn-bg: #00F0FF;
+  --f5-btn-text: #0D0D1A;
+  --f5-btn-hover-bg: #00C8DD;
+  --f5-btn-radius: 4px;
+}
+
+
+/* ============================================================
+   THEME: Library Study
+   ============================================================ */
+body.theme-library {
+  --f5-bg: #1E1209;
+  --f5-surface: #2A1F14;
+  --f5-border: #5C3A21;
+  --f5-border-strong: #B8860B;
+
+  --f5-text: #E8DCC8;
+  --f5-text-body: #C8B898;
+  --f5-text-muted: #8B7355;
+
+  --f5-accent: #B8860B;
+  --f5-accent-hover: #9A7009;
+
+  --f5-valid: #2D5F2D;
+  --f5-invalid: #A03030;
+  --f5-warning: #B8860B;
+
+  --f5-font-heading: 'EB Garamond', Georgia, serif;
+  --f5-font-body: 'Source Serif 4', Georgia, serif;
+  --f5-font-mono: 'Courier Prime', 'Courier New', monospace;
+  --f5-font-ui: 'Source Serif 4', Georgia, serif;
+
+  --f5-radius: 4px;
+  --f5-radius-sm: 2px;
+  --f5-radius-lg: 8px;
+
+  --f5-shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --f5-shadow-md: 0 2px 12px rgba(0,0,0,0.4);
+  --f5-shadow-lg: 0 4px 24px rgba(0,0,0,0.5);
+
+  --f5-grid-border: #B8860B;
+  --f5-grid-cell-border: #3A2A18;
+  --f5-grid-cell-bg: #2A1F14;
+  --f5-grid-cell-active: #342818;
+  --f5-grid-cell-filled: #2A1F14;
+  --f5-grid-cell-locked: #221A10;
+  --f5-grid-header-bg: #1E1209;
+  --f5-grid-header-text: #E8DCC8;
+
+  --f5-timer-bar-fill: #B8860B;
+  --f5-timer-warning: #A03030;
+
+  --f5-btn-bg: #B8860B;
+  --f5-btn-text: #1E1209;
+  --f5-btn-hover-bg: #9A7009;
+  --f5-btn-radius: 4px;
+}
+
+
+/* ============================================================
+   THEME: Pop Art
+   ============================================================ */
+body.theme-popart {
+  --f5-bg: #FFF9E0;
+  --f5-surface: #FFFFFF;
+  --f5-border: #000000;
+  --f5-border-strong: #000000;
+
+  --f5-text: #000000;
+  --f5-text-body: #333333;
+  --f5-text-muted: #555555;
+
+  --f5-accent: #FF1744;
+  --f5-accent-hover: #D50032;
+
+  --f5-valid: #00C853;
+  --f5-invalid: #FF1744;
+  --f5-warning: #FFD700;
+
+  --f5-font-heading: 'Bangers', cursive;
+  --f5-font-body: 'Archivo', sans-serif;
+  --f5-font-mono: 'Archivo', sans-serif;
+  --f5-font-ui: 'Archivo', sans-serif;
+
+  --f5-radius: 0px;
+  --f5-radius-sm: 0px;
+  --f5-radius-lg: 0px;
+  --f5-border-width: 2px;
+  --f5-border-width-thick: 4px;
+
+  --f5-shadow-sm: 3px 3px 0 #000;
+  --f5-shadow-md: 4px 4px 0 #000;
+  --f5-shadow-lg: 6px 6px 0 #000;
+
+  --f5-grid-border: #000000;
+  --f5-grid-cell-border: #000000;
+  --f5-grid-cell-bg: #FFFFFF;
+  --f5-grid-cell-active: #FFD700;
+  --f5-grid-cell-filled: #FFFFFF;
+  --f5-grid-cell-locked: #F0F0F0;
+  --f5-grid-header-bg: #0047AB;
+  --f5-grid-header-text: #FFFFFF;
+
+  --f5-timer-color: #000000;
+  --f5-timer-bar-fill: #0047AB;
+  --f5-timer-warning: #FF1744;
+
+  --f5-btn-bg: #0047AB;
+  --f5-btn-text: #FFFFFF;
+  --f5-btn-hover-bg: #003890;
+  --f5-btn-radius: 0px;
+}
+
+
+/* ============================================================
+   THEME: Botanical
+   ============================================================ */
+body.theme-botanical {
+  --f5-bg: #F7F3EC;
+  --f5-surface: #FDFBF7;
+  --f5-border: #D4CCBA;
+  --f5-border-strong: #8B5E3C;
+
+  --f5-text: #2C3319;
+  --f5-text-body: #4A5438;
+  --f5-text-muted: #8B9B78;
+
+  --f5-accent: #D4956A;
+  --f5-accent-hover: #B87D55;
+
+  --f5-valid: #2D5016;
+  --f5-invalid: #A03030;
+  --f5-warning: #D4956A;
+
+  --f5-font-heading: 'Cormorant Garamond', Georgia, serif;
+  --f5-font-body: 'Lato', 'Helvetica Neue', sans-serif;
+  --f5-font-mono: 'Courier Prime', 'Courier New', monospace;
+  --f5-font-ui: 'Lato', 'Helvetica Neue', sans-serif;
+
+  --f5-radius: 8px;
+  --f5-radius-sm: 4px;
+  --f5-radius-lg: 12px;
+
+  --f5-shadow-sm: 0 1px 4px rgba(44,51,25,0.06);
+  --f5-shadow-md: 0 2px 10px rgba(44,51,25,0.08);
+  --f5-shadow-lg: 0 4px 20px rgba(44,51,25,0.1);
+
+  --f5-grid-border: #D4CCBA;
+  --f5-grid-cell-border: #E8E2D6;
+  --f5-grid-cell-bg: #FDFBF7;
+  --f5-grid-cell-active: #F7F3EC;
+  --f5-grid-cell-filled: #FDFBF7;
+  --f5-grid-cell-locked: #F0EBE0;
+  --f5-grid-header-bg: #F7F3EC;
+  --f5-grid-header-text: #2C3319;
+
+  --f5-timer-bar-fill: #7B9E5C;
+  --f5-timer-warning: #D4956A;
+
+  --f5-btn-bg: #2D5016;
+  --f5-btn-text: #FDFBF7;
+  --f5-btn-hover-bg: #234010;
+  --f5-btn-radius: 8px;
+}
+
+
+/* ============================================================
+   THEME: Brutalist Digital
+   ============================================================ */
+body.theme-brutalist {
+  --f5-bg: #FFFFFF;
+  --f5-surface: #FFFFFF;
+  --f5-border: #000000;
+  --f5-border-strong: #000000;
+
+  --f5-text: #000000;
+  --f5-text-body: #000000;
+  --f5-text-muted: #666666;
+
+  --f5-accent: #0000FF;
+  --f5-accent-hover: #0000CC;
+
+  --f5-valid: #008000;
+  --f5-invalid: #FF0000;
+  --f5-warning: #FF8800;
+
+  --f5-font-heading: 'Space Mono', monospace;
+  --f5-font-body: 'Space Mono', monospace;
+  --f5-font-mono: 'Space Mono', monospace;
+  --f5-font-ui: 'Space Mono', monospace;
+
+  --f5-radius: 0px;
+  --f5-radius-sm: 0px;
+  --f5-radius-lg: 0px;
+  --f5-border-width: 2px;
+  --f5-border-width-thick: 4px;
+
+  --f5-shadow-sm: none;
+  --f5-shadow-md: none;
+  --f5-shadow-lg: none;
+
+  --f5-grid-border: #000000;
+  --f5-grid-cell-border: #000000;
+  --f5-grid-cell-bg: #FFFFFF;
+  --f5-grid-cell-active: #0000FF;
+  --f5-grid-cell-filled: #FFFFFF;
+  --f5-grid-cell-locked: #F0F0F0;
+  --f5-grid-header-bg: #000000;
+  --f5-grid-header-text: #FFFFFF;
+
+  --f5-timer-bar-fill: #000000;
+  --f5-timer-warning: #FF0000;
+
+  --f5-btn-bg: #000000;
+  --f5-btn-text: #FFFFFF;
+  --f5-btn-hover-bg: #333333;
+  --f5-btn-radius: 0px;
+}

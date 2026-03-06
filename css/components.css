@@ -1,0 +1,234 @@
+/* F5 Components — buttons, inputs, cards, badges */
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.f5-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--f5-space-sm);
+  padding: var(--f5-space-sm) var(--f5-space-xl);
+  background: var(--f5-btn-bg);
+  color: var(--f5-btn-text);
+  font-family: var(--f5-font-ui);
+  font-size: var(--f5-text-sm);
+  font-weight: var(--f5-weight-bold);
+  letter-spacing: 0.02em;
+  border: var(--f5-border-width-thick) solid transparent;
+  border-radius: var(--f5-btn-radius);
+  transition: background var(--f5-transition-fast), transform var(--f5-transition-fast);
+}
+
+.f5-btn:hover {
+  background: var(--f5-btn-hover-bg);
+}
+
+.f5-btn:active {
+  transform: scale(0.98);
+}
+
+.f5-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.f5-btn--outline {
+  background: transparent;
+  color: var(--f5-text);
+  border-color: var(--f5-border);
+}
+
+.f5-btn--outline:hover {
+  background: var(--f5-surface);
+  border-color: var(--f5-border-strong);
+}
+
+.f5-btn--ghost {
+  background: transparent;
+  color: var(--f5-text-muted);
+  padding: var(--f5-space-xs) var(--f5-space-sm);
+}
+
+.f5-btn--ghost:hover {
+  color: var(--f5-text);
+  background: transparent;
+}
+
+.f5-btn--large {
+  padding: var(--f5-space-md) var(--f5-space-2xl);
+  font-size: var(--f5-text-base);
+}
+
+/* ============================================================
+   TEXT INPUT
+   ============================================================ */
+.f5-input {
+  width: 100%;
+  padding: var(--f5-space-sm) var(--f5-space-md);
+  background: var(--f5-surface);
+  color: var(--f5-text);
+  border: var(--f5-border-width) solid var(--f5-border);
+  border-radius: var(--f5-radius);
+  font-family: var(--f5-font-mono);
+  font-size: var(--f5-text-sm);
+  transition: border-color var(--f5-transition-fast);
+}
+
+.f5-input:focus {
+  outline: none;
+  border-color: var(--f5-border-strong);
+}
+
+.f5-input::placeholder {
+  color: var(--f5-text-muted);
+}
+
+/* ============================================================
+   SELECT
+   ============================================================ */
+.f5-select {
+  width: 100%;
+  padding: var(--f5-space-sm) var(--f5-space-md);
+  background: var(--f5-surface);
+  color: var(--f5-text);
+  border: var(--f5-border-width) solid var(--f5-border);
+  border-radius: var(--f5-radius);
+  font-family: var(--f5-font-ui);
+  font-size: var(--f5-text-sm);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%238A8A7A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.f5-select:focus {
+  outline: none;
+  border-color: var(--f5-border-strong);
+}
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.f5-card {
+  background: var(--f5-surface);
+  border: var(--f5-border-width) solid var(--f5-border);
+  border-radius: var(--f5-radius-lg);
+  padding: var(--f5-space-lg);
+  box-shadow: var(--f5-shadow-sm);
+}
+
+/* ============================================================
+   LABEL
+   ============================================================ */
+.f5-label {
+  display: block;
+  font-family: var(--f5-font-ui);
+  font-size: var(--f5-text-xs);
+  font-weight: var(--f5-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--f5-text-muted);
+  margin-bottom: var(--f5-space-xs);
+}
+
+/* ============================================================
+   BADGE (valid/invalid indicators)
+   ============================================================ */
+.f5-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: var(--f5-text-xs);
+  font-weight: var(--f5-weight-bold);
+  border-radius: var(--f5-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.f5-badge--valid {
+  background: rgba(45, 106, 45, 0.12);
+  color: var(--f5-valid);
+}
+
+.f5-badge--invalid {
+  background: rgba(200, 16, 46, 0.1);
+  color: var(--f5-invalid);
+}
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+.f5-divider {
+  width: 100%;
+  height: var(--f5-border-width);
+  background: var(--f5-border);
+  margin: var(--f5-space-xl) 0;
+}
+
+.f5-divider--thick {
+  height: var(--f5-border-width-thick);
+  background: var(--f5-border-strong);
+}
+
+/* ============================================================
+   LOADING SPINNER
+   ============================================================ */
+.f5-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--f5-border);
+  border-top-color: var(--f5-text);
+  border-radius: 50%;
+  animation: f5-spin 0.8s linear infinite;
+}
+
+@keyframes f5-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   SCREEN TITLES
+   ============================================================ */
+.f5-screen-title {
+  font-family: var(--f5-font-heading);
+  font-weight: var(--f5-weight-black);
+  font-size: var(--f5-text-2xl);
+  margin-bottom: var(--f5-space-sm);
+}
+
+.f5-screen-subtitle {
+  font-family: var(--f5-font-body);
+  color: var(--f5-text-muted);
+  font-size: var(--f5-text-base);
+  margin-bottom: var(--f5-space-xl);
+}
+
+/* ============================================================
+   FORM GROUP
+   ============================================================ */
+.f5-form-group {
+  margin-bottom: var(--f5-space-lg);
+}
+
+.f5-form-hint {
+  font-size: var(--f5-text-xs);
+  color: var(--f5-text-muted);
+  margin-top: var(--f5-space-xs);
+}
+
+/* ============================================================
+   VISUALLY HIDDEN (a11y)
+   ============================================================ */
+.f5-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

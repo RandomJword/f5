@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F5 Spike 1 — Browser API Access</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #0c0c0e; --surface: #16161a; --border: #2a2a32; --text: #e8e6e3; --muted: #8a8a96; --accent: #6c63ff; --green: #4ecdc4; --red: #ff6b6b; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; max-width: 720px; margin: 0 auto; line-height: 1.6; }
+h1 { color: var(--accent); font-size: 1.5rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+input { width: 100%; padding: 0.6rem 0.8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem; }
+input:focus { outline: none; border-color: var(--accent); }
+button { padding: 0.6rem 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.result { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; }
+.pass { border-color: var(--green); }
+.pass::before { content: "PASS"; display: block; color: var(--green); font-weight: 700; margin-bottom: 0.5rem; font-family: system-ui; font-size: 1rem; }
+.fail { border-color: var(--red); }
+.fail::before { content: "FAIL"; display: block; color: var(--red); font-weight: 700; margin-bottom: 0.5rem; font-family: system-ui; font-size: 1rem; }
+.info { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; font-size: 0.85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>Spike 1: Browser API Access</h1>
+<p class="subtitle">Can we fetch directly from the browser to api.anthropic.com? This validates ADR-002.</p>
+
+<label for="apiKey">Anthropic API Key</label>
+<input type="password" id="apiKey" placeholder="sk-ant-..." />
+
+<button id="runBtn" onclick="runSpike()">Run Spike</button>
+
+<div id="output"></div>
+
+<div class="info">
+  <strong>What this tests:</strong> A single fetch to the Anthropic Messages API with the
+  <code>anthropic-dangerous-direct-browser-access: true</code> header. We send a trivial
+  prompt and check for a 200 response with valid JSON. If this fails, the entire F5
+  architecture would need a proxy server.
+</div>
+
+<script>
+async function runSpike() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) { alert('Enter your API key'); return; }
+
+  const btn = document.getElementById('runBtn');
+  const output = document.getElementById('output');
+  btn.disabled = true;
+  btn.textContent = 'Testing...';
+  output.className = 'result';
+  output.textContent = 'Sending request to api.anthropic.com...\n';
+
+  const startTime = performance.now();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 50,
+        messages: [{ role: 'user', content: 'Reply with exactly: "F5 spike confirmed"' }],
+      }),
+    });
+
+    const elapsed = Math.round(performance.now() - startTime);
+    const data = await res.json();
+
+    if (res.ok && data.content && data.content[0]) {
+      output.className = 'result pass';
+      output.textContent += `Status: ${res.status}\n`;
+      output.textContent += `Latency: ${elapsed}ms\n`;
+      output.textContent += `Model: ${data.model}\n`;
+      output.textContent += `Response: "${data.content[0].text}"\n`;
+      output.textContent += `Usage: ${data.usage.input_tokens} in / ${data.usage.output_tokens} out\n\n`;
+      output.textContent += `--- Full response ---\n${JSON.stringify(data, null, 2)}`;
+    } else {
+      output.className = 'result fail';
+      output.textContent += `Status: ${res.status}\n`;
+      output.textContent += `Latency: ${elapsed}ms\n\n`;
+      output.textContent += JSON.stringify(data, null, 2);
+    }
+  } catch (err) {
+    output.className = 'result fail';
+    output.textContent += `Network error: ${err.message}\n\n`;
+    output.textContent += 'This likely means CORS is blocking the request.\n';
+    output.textContent += 'Check the browser console (DevTools > Console) for details.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Run Again';
+}
+</script>
+
+</body>
+</html>

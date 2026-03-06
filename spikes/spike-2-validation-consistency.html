@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F5 Spike 2 — Validation Consistency</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #0c0c0e; --surface: #16161a; --border: #2a2a32; --text: #e8e6e3; --muted: #8a8a96; --accent: #6c63ff; --green: #4ecdc4; --red: #ff6b6b; --yellow: #ffd93d; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; max-width: 860px; margin: 0 auto; line-height: 1.6; }
+h1 { color: var(--accent); font-size: 1.5rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+input, select { width: 100%; padding: 0.6rem 0.8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem; }
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+.row { display: flex; gap: 1rem; }
+.row > * { flex: 1; }
+button { padding: 0.6rem 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.progress { margin-top: 1rem; font-family: monospace; font-size: 0.85rem; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.8rem; }
+th { text-align: left; padding: 0.6rem 0.8rem; background: var(--surface); color: #fff; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
+td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); font-family: monospace; }
+.consistent { color: var(--green); }
+.inconsistent { color: var(--red); }
+.summary { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border-radius: 8px; }
+.summary h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+.metric { display: inline-block; margin-right: 2rem; margin-bottom: 0.5rem; }
+.metric-value { font-size: 1.5rem; font-weight: 700; }
+.metric-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+.info { margin-top: 1.5rem; padding: 1rem; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; font-size: 0.85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>Spike 2: Validation Consistency</h1>
+<p class="subtitle">Does Haiku return consistent rulings and valid JSON for the same inputs? Tests the exact system prompt from the discovery doc.</p>
+
+<label for="apiKey">Anthropic API Key</label>
+<input type="password" id="apiKey" placeholder="sk-ant-..." />
+
+<div class="row">
+  <div>
+    <label for="iterations">Iterations per test case</label>
+    <select id="iterations">
+      <option value="3">3 (quick sanity check)</option>
+      <option value="5" selected>5 (recommended)</option>
+      <option value="10">10 (thorough)</option>
+      <option value="20">20 (full spike spec)</option>
+    </select>
+  </div>
+</div>
+
+<button id="runBtn" onclick="runSpike()">Run Spike</button>
+
+<div class="progress" id="progress"></div>
+<div id="summary"></div>
+<div id="results"></div>
+
+<div class="info">
+  <strong>What this tests:</strong> We send 10 edge-case answers to Haiku multiple times each,
+  using the exact system prompt planned for F5. We measure: (a) JSON parse success rate,
+  (b) ruling consistency for identical inputs. Targets: >98% valid JSON, >95% consistent rulings.
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are the judge for "Facts in Five."
+Rules:
+1. Answer must belong to the category.
+2. Answer must start with the specified letter.
+   - People: SURNAME is the keyword (e.g., "Einstein" for E).
+   - Titles: ignore "The", "A", "An" (e.g., The Birds = B).
+   - Places: first word (e.g., New York = N).
+3. Must be real and verifiable - no fictional entries.
+4. Common abbreviations/nicknames OK if widely recognized.
+5. Minor spelling errors OK if clearly recognizable.
+
+Respond with a JSON array only. No markdown fences.
+Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
+
+const TEST_CASES = [
+  { id: "r0c0", category: "Musical Artists", letter: "B", answer: "The Beatles" },
+  { id: "r0c1", category: "World Cities", letter: "N", answer: "New York" },
+  { id: "r0c2", category: "U.S. Presidents", letter: "K", answer: "JFK" },
+  { id: "r1c0", category: "Animals", letter: "P", answer: "Platypus" },
+  { id: "r1c1", category: "Countries", letter: "U", answer: "USA" },
+  { id: "r1c2", category: "Movies", letter: "G", answer: "The Godfather" },
+  { id: "r2c0", category: "Scientists", letter: "E", answer: "Albert Einstein" },
+  { id: "r2c1", category: "Rivers", letter: "A", answer: "Amazon" },
+  { id: "r2c2", category: "Olympic Sports", letter: "S", answer: "Sking" },
+  { id: "r3c0", category: "Fruits", letter: "B", answer: "Brocoli" },
+];
+
+async function callAPI(key, answers) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1500,
+      temperature: 0,
+      messages: [{
+        role: 'user',
+        content: `Validate:\n${JSON.stringify(answers)}`,
+      }],
+      system: SYSTEM_PROMPT,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`API ${res.status}: ${err.error?.message || JSON.stringify(err)}`);
+  }
+
+  return res.json();
+}
+
+function parseResponse(data) {
+  const text = data.content[0].text.trim();
+  // Try parsing directly, then try stripping markdown fences
+  try {
+    return { parsed: true, results: JSON.parse(text) };
+  } catch {
+    const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '');
+    try {
+      return { parsed: true, results: JSON.parse(cleaned) };
+    } catch {
+      return { parsed: false, raw: text };
+    }
+  }
+}
+
+async function runSpike() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) { alert('Enter your API key'); return; }
+
+  const iterations = parseInt(document.getElementById('iterations').value);
+  const btn = document.getElementById('runBtn');
+  const progress = document.getElementById('progress');
+  const summaryDiv = document.getElementById('summary');
+  const resultsDiv = document.getElementById('results');
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  summaryDiv.innerHTML = '';
+  resultsDiv.innerHTML = '';
+
+  const totalCalls = iterations;
+  let completedCalls = 0;
+  let jsonSuccesses = 0;
+  let jsonFailures = 0;
+
+  // Store results per test case ID across iterations
+  const rulingsByCase = {};
+  TEST_CASES.forEach(tc => { rulingsByCase[tc.id] = []; });
+
+  for (let i = 0; i < iterations; i++) {
+    progress.textContent = `Iteration ${i + 1}/${iterations}...`;
+
+    try {
+      const data = await callAPI(key, TEST_CASES);
+      const { parsed, results, raw } = parseResponse(data);
+
+      if (parsed) {
+        jsonSuccesses++;
+        results.forEach(r => {
+          if (rulingsByCase[r.id]) {
+            rulingsByCase[r.id].push({ valid: r.valid, explanation: r.explanation, canonical: r.canonical });
+          }
+        });
+      } else {
+        jsonFailures++;
+        progress.textContent += ` [JSON parse failed]`;
+      }
+    } catch (err) {
+      jsonFailures++;
+      progress.textContent += ` [Error: ${err.message}]`;
+    }
+
+    completedCalls++;
+
+    // Small delay to avoid rate limiting
+    if (i < iterations - 1) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  // Analyze consistency
+  let consistentCount = 0;
+  let totalCases = 0;
+  const caseResults = [];
+
+  TEST_CASES.forEach(tc => {
+    const rulings = rulingsByCase[tc.id];
+    if (rulings.length === 0) return;
+    totalCases++;
+
+    const validValues = rulings.map(r => r.valid);
+    const allSame = validValues.every(v => v === validValues[0]);
+    if (allSame) consistentCount++;
+
+    const trueCount = validValues.filter(v => v === true).length;
+    const falseCount = validValues.filter(v => v === false).length;
+
+    caseResults.push({
+      ...tc,
+      rulings,
+      consistent: allSame,
+      trueCount,
+      falseCount,
+      majorityRuling: trueCount >= falseCount ? 'valid' : 'invalid',
+    });
+  });
+
+  const jsonRate = totalCalls > 0 ? ((jsonSuccesses / totalCalls) * 100).toFixed(1) : 0;
+  const consistencyRate = totalCases > 0 ? ((consistentCount / totalCases) * 100).toFixed(1) : 0;
+
+  const jsonColor = jsonRate >= 98 ? 'var(--green)' : jsonRate >= 90 ? 'var(--yellow)' : 'var(--red)';
+  const consColor = consistencyRate >= 95 ? 'var(--green)' : consistencyRate >= 80 ? 'var(--yellow)' : 'var(--red)';
+
+  summaryDiv.innerHTML = `
+    <div class="summary">
+      <h3>Results</h3>
+      <div class="metric">
+        <div class="metric-value" style="color:${jsonColor}">${jsonRate}%</div>
+        <div class="metric-label">JSON Parse Rate (target: >98%)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value" style="color:${consColor}">${consistencyRate}%</div>
+        <div class="metric-label">Ruling Consistency (target: >95%)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">${iterations}</div>
+        <div class="metric-label">Iterations</div>
+      </div>
+    </div>
+  `;
+
+  // Build results table
+  let tableHTML = `<table><thead><tr>
+    <th>Test Case</th><th>Category</th><th>Letter</th><th>Answer</th>
+    <th>Rulings</th><th>Consistent?</th><th>Sample Explanation</th>
+  </tr></thead><tbody>`;
+
+  caseResults.forEach(c => {
+    const cls = c.consistent ? 'consistent' : 'inconsistent';
+    const rulingStr = c.rulings.map(r => r.valid ? 'T' : 'F').join(' ');
+    const sampleExp = c.rulings[0]?.explanation || '-';
+    tableHTML += `<tr>
+      <td>${c.id}</td>
+      <td>${c.category}</td>
+      <td>${c.letter}</td>
+      <td>${c.answer}</td>
+      <td class="${cls}">${rulingStr} (${c.trueCount}T/${c.falseCount}F)</td>
+      <td class="${cls}">${c.consistent ? 'Yes' : 'NO'}</td>
+      <td style="color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis">${sampleExp}</td>
+    </tr>`;
+  });
+
+  tableHTML += '</tbody></table>';
+  resultsDiv.innerHTML = tableHTML;
+
+  progress.textContent = `Done. ${jsonSuccesses}/${totalCalls} calls returned valid JSON.`;
+  btn.disabled = false;
+  btn.textContent = 'Run Again';
+}
+</script>
+
+</body>
+</html>

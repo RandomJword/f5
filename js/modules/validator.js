@@ -108,6 +108,7 @@ Rules:
 4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
 5. Proper names and full words required. Abbreviations like "JFK" or "USA" are not accepted — write "Kennedy" or "United States."
 6. Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi", "Tchaikovsky" for "Tchaikovskiy" — these are all valid because the intent is clear. The test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
+   CRITICAL: Use the CATEGORY as context for spelling interpretation. If an answer doesn't fit the category as written, check if a close spelling variant DOES fit. The category is the strongest clue for intent. Example: "Kawaii" under Islands is clearly "Kauai" (Hawaiian island) — accept it. "Koalla" under Animals is clearly "Koala" — accept it. Do NOT match the answer to an unrelated meaning when a category-relevant correction exists.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. When in doubt about whether someone/something is real, give the benefit of the doubt if the answer is plausible and specific.
 
@@ -133,6 +134,7 @@ Rules:
 4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
 5. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
 6. Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi", "Tchaikovsky" for "Tchaikovskiy" — these are all valid because the intent is clear. The test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
+   CRITICAL: Use the CATEGORY as context for spelling interpretation. If an answer doesn't fit the category as written, check if a close spelling variant DOES fit. The category is the strongest clue for intent. Example: "Kawaii" under Islands is clearly "Kauai" (Hawaiian island) — accept it. "Koalla" under Animals is clearly "Koala" — accept it. Do NOT match the answer to an unrelated meaning when a category-relevant correction exists.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
 9. When in doubt, accept it. The player is playing solo for fun.
@@ -354,7 +356,7 @@ Rules for judging:
 - If the answer includes a parenthetical note like "(gravity)" or "(Soviet leader)", IGNORE it completely. Do NOT fact-check it or use it for/against the answer. It is just a disambiguation hint.
 - Do NOT reject because the person/thing is "primarily known as" something else. If it fits the category AT ALL, accept it.
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
-- Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
+- Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as context — if the answer doesn't fit as written but a close spelling variant does fit the category, accept it (e.g., "Kawaii" under Islands = "Kauai").
 - Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.
 ${strictness === 'lenient'
   ? '- Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.'

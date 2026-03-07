@@ -61,7 +61,7 @@ function setTheme(theme) {
 }
 
 function getStrictness() {
-  return get('strictness', 'strict');
+  return get('strictness', 'lenient');
 }
 
 function setStrictness(level) {
@@ -71,7 +71,7 @@ function setStrictness(level) {
 function getSettings() {
   return get('settings', {
     theme: '',
-    strictness: 'strict',
+    strictness: 'lenient',
     difficulty: 'standard',
   });
 }

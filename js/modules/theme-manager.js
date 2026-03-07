@@ -10,7 +10,7 @@ const THEMES = {
   botanical:  { class: 'theme-botanical',   label: 'Botanical',         fonts: ['Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400', 'Lato:wght@400;700', 'Courier+Prime'] },
 };
 
-const DEFAULT_THEME = 'newspaper';
+const DEFAULT_THEME = 'library';
 let currentTheme = DEFAULT_THEME;
 const loadedFontSets = new Set();
 

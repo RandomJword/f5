@@ -33,8 +33,8 @@
 - [x] **WCAG AA contrast audit** — 16 fixes across all 5 themes
 - [x] **Defaults** — Library Study theme, lenient judging
 - [x] **Anti-repetition** — categories avoid last 25 games, letters avoid last 3 games, tracked at game creation (not just scoring)
-- [x] **Knowledge cutoff handling** — prompt tells Claude to accept plausible unknowns; Wikipedia rescue overrides rejections when Wikipedia confirms existence
-- [x] **Prompt tuning v2** — single-name surname detection (Willis case), knowledge cutoff instruction
+- [x] **Knowledge cutoff handling** — prompt tells Claude to accept plausible unknowns; Wikipedia-informed re-validation fetches summaries and re-submits to Claude with context
+- [x] **Prompt tuning v2** — single-name surname detection (Willis case), knowledge cutoff instruction, spelling rule rewrite ("if you can identify intent, accept it")
 - [x] **Themes reduced** — 8 → 5 (removed Pop Art, Brutalist Digital, one other)
 - [x] **GitHub Pages deploy** — https://randomjword.github.io/f5/
 - [x] **View Stats on results screen**

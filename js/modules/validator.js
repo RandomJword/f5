@@ -184,7 +184,6 @@ async function validate(answers, categories, letters) {
     } catch (retryErr) {
       // API failed — surface the error message
       console.error('[F5 Validator] API failed:', retryErr.message);
-      alert('API error: ' + retryErr.message);
       return null;
     }
   }

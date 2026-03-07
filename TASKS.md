@@ -48,6 +48,14 @@
 - [x] **Mobile autofill fix** — autocomplete="f5-answer" on all inputs prevents browser address suggestions
 - [x] **Category-context spelling correction** — prompt now uses category as primary clue for misspellings (Kawaii → Kauai under Islands)
 - [x] **Strict mode removed** — deleted strict prompt, removed getStrictness/setStrictness, always lenient
+- [x] **Remove Famous Battles category** — per user feedback
+- [x] **Sticky header** — position: sticky + background color, title overflow: hidden/ellipsis
+- [x] **Pull-to-refresh: home only** — overscroll-behavior-y toggled per screen in showScreen()
+- [x] **Mobile swipe fix** — require horizontal > vertical * 1.5 to prevent accidental card changes
+- [x] **Mobile input: remove placeholder hint text** — letter badge is sufficient
+- [x] **Mobile results: category cards** — scrollable card list replaces grid on <= 600px, filled circle check/X icons, inline explanations + appeal buttons
+- [x] **UX exploration mockups** — 4-agent team produced mockups for large screen, mobile input, mobile results (3 approaches), responsive type scale
+- [x] **Date-based cache busting** — v=20260307b format, visible version stamp in Settings
 
 ## Backlog
 - [ ] Self-scoring fallback UI (when API fails)

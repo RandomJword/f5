@@ -13,18 +13,30 @@ const APPEAL_MODEL = 'claude-sonnet-4-6';
 const PROXY_URL = 'https://f5-proxy.f5family.workers.dev';
 
 async function call(systemPrompt, userMessage, maxTokens = 2000, { model } = {}) {
+  const useModel = model || MODEL;
   const inviteCode = storage.getInviteCode();
   const apiKey = storage.getApiKey();
 
-  if (inviteCode && PROXY_URL) {
-    return callProxy(systemPrompt, userMessage, maxTokens, model, inviteCode);
+  if (!inviteCode && !apiKey) {
+    throw new Error('No API key or invite code configured');
   }
 
-  if (apiKey) {
-    return callDirect(systemPrompt, userMessage, maxTokens, model, apiKey);
+  try {
+    if (inviteCode && PROXY_URL) {
+      return await callProxy(systemPrompt, userMessage, maxTokens, useModel, inviteCode);
+    }
+    return await callDirect(systemPrompt, userMessage, maxTokens, useModel, apiKey);
+  } catch (err) {
+    // Fallback to Sonnet on 5xx errors (only when originally using Haiku)
+    if (useModel === MODEL && /5\d\d/.test(err.message)) {
+      console.warn(`[F5 API] ${MODEL} failed (${err.message}), falling back to ${APPEAL_MODEL}`);
+      if (inviteCode && PROXY_URL) {
+        return callProxy(systemPrompt, userMessage, maxTokens, APPEAL_MODEL, inviteCode);
+      }
+      return callDirect(systemPrompt, userMessage, maxTokens, APPEAL_MODEL, apiKey);
+    }
+    throw err;
   }
-
-  throw new Error('No API key or invite code configured');
 }
 
 async function callDirect(systemPrompt, userMessage, maxTokens, model, apiKey) {

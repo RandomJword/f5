@@ -1,7 +1,7 @@
 // F5 Game Engine — pure functions, zero side effects
 // State creation, category/letter selection, scoring
 
-import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, getPool } from './categories.js';
+import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, EASY_LETTERS, getPool } from './categories.js';
 import * as storage from './storage.js';
 
 // Fisher-Yates shuffle (returns new array)
@@ -67,7 +67,7 @@ function selectCategories(difficulty = 'standard') {
  * Select 5 random letters, avoiding letters from the last 2 games.
  */
 function selectLetters(mode = 'standard') {
-  const pool = mode === 'expert' ? EXPERT_LETTERS : STANDARD_LETTERS;
+  const pool = mode === 'expert' ? EXPERT_LETTERS : mode === 'easy' ? EASY_LETTERS : STANDARD_LETTERS;
   const recentLetters = new Set();
 
   // Use dedicated recent-letters tracker (includes abandoned games)
@@ -93,7 +93,7 @@ function selectLetters(mode = 'standard') {
 function newGame(options = {}) {
   const settings = storage.getSettings();
   const difficulty = options.difficulty || settings.difficulty || 'standard';
-  const letterMode = options.letterMode || 'standard';
+  const letterMode = options.letterMode || difficulty;
 
   const categories = selectCategories(difficulty);
   const letters = selectLetters(letterMode);

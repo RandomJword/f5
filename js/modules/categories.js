@@ -312,6 +312,8 @@ const CATEGORIES = [
 // Letters excluding Q, X, Z for standard mode
 const STANDARD_LETTERS = 'ABCDEFGHIJKLMNOPRSTUVWY'.split('');
 const EXPERT_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+// Easy mode: 15 letters (2/3 of standard), dropping I, J, K, O, U, V, W, Y
+const EASY_LETTERS = 'ABCDEFGHLMNPRST'.split('');
 
 // Easy mode: 67 universally accessible categories
 const EASY_CATEGORIES = new Set([
@@ -355,4 +357,4 @@ function getPool(mode) {
   return CATEGORIES;
 }
 
-export { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, EASY_CATEGORIES, getPool };
+export { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, EASY_LETTERS, EASY_CATEGORIES, getPool };

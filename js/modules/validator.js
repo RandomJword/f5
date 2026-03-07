@@ -39,6 +39,56 @@ async function wikiCheck(query) {
   }
 }
 
+/**
+ * Fetch a Wikipedia summary for an answer.
+ * Returns { found, title, extract } or { found: false }.
+ * Tries direct page lookup first, then search.
+ */
+async function wikiLookup(query) {
+  try {
+    // Strip parentheticals the player may have added
+    const clean = query.replace(/\s*\(.*?\)\s*$/, '').trim();
+    const encoded = encodeURIComponent(clean);
+
+    // Try direct page summary
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`,
+      { headers: { 'Api-User-Agent': 'F5Game/1.0' } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return { found: true, title: data.title, extract: data.extract || '' };
+    }
+
+    // Try search fallback
+    if (res.status === 404) {
+      const searchRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encoded}&srlimit=1&format=json&origin=*`
+      );
+      if (searchRes.ok) {
+        const data = await searchRes.json();
+        if (data.query.search.length > 0) {
+          const title = data.query.search[0].title;
+          // Fetch summary for the search result
+          const summaryRes = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+            { headers: { 'Api-User-Agent': 'F5Game/1.0' } }
+          );
+          if (summaryRes.ok) {
+            const summaryData = await summaryRes.json();
+            return { found: true, title: summaryData.title, extract: summaryData.extract || '' };
+          }
+          return { found: true, title, extract: '' };
+        }
+      }
+    }
+
+    return { found: false };
+  } catch {
+    return { found: false };
+  }
+}
+
 const SYSTEM_PROMPT_STRICT = `You are the judge for "Facts in Five."
 Rules:
 1. Answer must belong to the category. Interpret categories BROADLY — do NOT split hairs:
@@ -169,7 +219,7 @@ async function validate(answers, categories, letters) {
 
   // Map results and collect items needing Wikipedia verification
   const toVerify = [];   // valid answers — Wikipedia confirms existence
-  const toRescue = [];   // rejected answers — Wikipedia may override Claude
+  const toRescue = [];   // rejected answers — Wikipedia may provide context for re-ruling
 
   for (const item of toSubmit) {
     const apiResult = resultMap.get(item.id);
@@ -185,42 +235,79 @@ async function validate(answers, categories, letters) {
       // Verify valid answers actually exist
       toVerify.push({ item, result, query: result.canonical || item.answer });
     } else {
-      // Rescue rejected answers if Wikipedia confirms they exist
-      // Try canonical name first (Claude may have identified correct spelling), fall back to player's answer
-      toRescue.push({ item, result, query: result.canonical || item.answer, fallbackQuery: result.canonical ? item.answer : null });
+      // Queue rejected answers for Wikipedia-assisted re-validation
+      toRescue.push({ item, result, query: result.canonical || item.answer });
     }
   }
 
-  // Run all Wikipedia checks in parallel
-  const allChecks = [...toVerify, ...toRescue];
-  if (allChecks.length > 0) {
-    const checks = await Promise.all(
-      allChecks.map(v => wikiCheck(v.query))
-    );
+  // Run Wikipedia checks in parallel: existence checks for valid, full lookups for rejected
+  const verifyChecks = toVerify.length > 0
+    ? Promise.all(toVerify.map(v => wikiCheck(v.query)))
+    : Promise.resolve([]);
+  const rescueLookups = toRescue.length > 0
+    ? Promise.all(toRescue.map(v => wikiLookup(v.query)))
+    : Promise.resolve([]);
 
-    for (let i = 0; i < allChecks.length; i++) {
-      const found = checks[i];
-      const v = allChecks[i];
-      const isRescue = i >= toVerify.length;
+  const [verifyResults, rescueResults] = await Promise.all([verifyChecks, rescueLookups]);
 
-      if (isRescue && found === true) {
-        // Wikipedia found it — Claude was wrong
-        v.result.valid = true;
-        v.result.explanation = `Verified via Wikipedia.`;
-        results[v.item.row][v.item.col] = v.result;
-      } else if (isRescue && found !== true && v.fallbackQuery) {
-        // Primary query failed, try fallback (player's original answer)
-        const fallbackFound = await wikiCheck(v.fallbackQuery);
-        if (fallbackFound === true) {
-          v.result.valid = true;
-          v.result.explanation = `Verified via Wikipedia.`;
-          results[v.item.row][v.item.col] = v.result;
+  // Process existence checks for valid answers
+  for (let i = 0; i < toVerify.length; i++) {
+    if (verifyResults[i] === false) {
+      const v = toVerify[i];
+      v.result.valid = false;
+      v.result.explanation = `Could not verify "${v.query}" exists. If this is wrong, appeal.`;
+      results[v.item.row][v.item.col] = v.result;
+    }
+  }
+
+  // Process rescue: re-validate rejected answers with Wikipedia context
+  const rescueItems = [];
+  for (let i = 0; i < toRescue.length; i++) {
+    const wiki = rescueResults[i];
+    if (wiki.found && wiki.extract) {
+      rescueItems.push({ ...toRescue[i], wiki });
+    }
+  }
+
+  if (rescueItems.length > 0) {
+    // Re-submit to Claude with Wikipedia context
+    const rescuePayload = rescueItems.map(r => ({
+      id: r.item.id,
+      category: r.item.category,
+      letter: r.item.letter,
+      answer: r.item.answer,
+      wikipedia_title: r.wiki.title,
+      wikipedia_extract: r.wiki.extract.slice(0, 300),
+    }));
+
+    try {
+      const rescueText = await api.call(
+        systemPrompt,
+        `Re-validate these previously rejected answers. Wikipedia has confirmed they exist. For each answer, a Wikipedia summary is provided. Use this information to judge category fit and letter match. Do NOT reject just because the answer was not in your training data.\n\n${JSON.stringify(rescuePayload)}`
+      );
+      const rescueApiResults = parseResponse(rescueText);
+      const rescueMap = new Map();
+      for (const r of rescueApiResults) {
+        rescueMap.set(r.id, r);
+      }
+
+      for (const r of rescueItems) {
+        const apiResult = rescueMap.get(r.item.id);
+        if (apiResult) {
+          const newResult = {
+            valid: apiResult.valid,
+            explanation: apiResult.explanation || '',
+            canonical: apiResult.canonical || '',
+          };
+          results[r.item.row][r.item.col] = newResult;
         }
-      } else if (!isRescue && found === false) {
-        // Wikipedia couldn't find it — override to invalid
-        v.result.valid = false;
-        v.result.explanation = `Could not verify "${v.query}" exists. If this is wrong, appeal.`;
-        results[v.item.row][v.item.col] = v.result;
+      }
+    } catch {
+      // Rescue API call failed — fall back to simple Wikipedia existence check
+      for (const r of rescueItems) {
+        r.result.valid = true;
+        r.result.explanation = `Verified via Wikipedia (${r.wiki.title}).`;
+        results[r.item.row][r.item.col] = r.result;
       }
     }
   }

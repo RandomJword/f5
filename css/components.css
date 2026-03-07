@@ -196,6 +196,7 @@
   font-weight: var(--f5-weight-black);
   font-size: var(--f5-text-2xl);
   margin-bottom: var(--f5-space-sm);
+  outline: none;
 }
 
 .f5-screen-subtitle {

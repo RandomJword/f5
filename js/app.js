@@ -309,6 +309,21 @@ function showResults(game, animate = true) {
   const resultsGrid = document.getElementById('results-grid');
   resultsGrid.innerHTML = '';
 
+  const isMobileResults = window.innerWidth <= 600;
+
+  if (isMobileResults) {
+    renderResultsMobile(resultsGrid, game, animate);
+  } else {
+    renderResultsDesktop(resultsGrid, game, animate);
+  }
+}
+
+function renderResultsDesktop(resultsGrid, game, animate) {
+  const { score, validationResults, categories, letters, grid: answers } = game;
+  const totalEl = document.getElementById('results-total');
+  const subtitleEl = document.getElementById('results-subtitle');
+  const breakdown = document.getElementById('results-breakdown');
+
   // Corner
   const corner = document.createElement('div');
   corner.className = 'f5-grid__corner';
@@ -376,7 +391,6 @@ function showResults(game, animate = true) {
         badge.textContent = result.canonical || 'Valid';
       } else if (answer) {
         badge.style.color = 'var(--f5-invalid)';
-        // Short label in cell — full explanation goes in spanning row below
         badge.textContent = result.appealed ? 'Appeal denied' : 'Invalid';
       } else {
         badge.style.color = 'var(--f5-text-muted)';
@@ -419,7 +433,7 @@ function showResults(game, animate = true) {
         cell.appendChild(appealBtn);
       }
 
-      // Show appeal outcome label (short — no explanation text)
+      // Show appeal outcome label
       if (result.appealed && result.valid) {
         const overturnedEl = document.createElement('div');
         overturnedEl.style.fontSize = 'var(--f5-text-xs)';
@@ -439,7 +453,6 @@ function showResults(game, animate = true) {
 
     // Insert explanation rows for rejected cells (span all 5 letter columns)
     for (const da of rejectedCells) {
-      // Empty spacer in column 1 (category label column)
       const spacer = document.createElement('div');
       spacer.style.cssText = `
         background: var(--f5-grid-header-bg);
@@ -448,7 +461,6 @@ function showResults(game, animate = true) {
       `;
       resultsGrid.appendChild(spacer);
 
-      // Explanation spanning columns 2–6
       const explRow = document.createElement('div');
       explRow.style.cssText = `
         grid-column: span 5;
@@ -473,7 +485,6 @@ function showResults(game, animate = true) {
     let runningScore = 0;
     const revealOrder = [];
 
-    // Build reveal order: row by row, left to right
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         const idx = r * 5 + c;
@@ -492,21 +503,17 @@ function showResults(game, animate = true) {
           ? 'rgba(45,106,45,0.15)'
           : answer ? 'rgba(200,16,46,0.12)' : 'transparent';
 
-        // Flash then settle
         setTimeout(() => {
           cell.style.background = result.valid
             ? 'rgba(45,106,45,0.08)'
             : answer ? 'rgba(200,16,46,0.06)' : 'transparent';
         }, 200);
 
-        // Count up score as valid cells are revealed
         if (result.valid) {
           runningScore++;
-          // Simple running count display (final n² score shown at end)
           totalEl.textContent = runningScore;
         }
 
-        // After last cell, show final score
         if (i === revealOrder.length - 1) {
           setTimeout(() => {
             animateScore(totalEl, score.total);
@@ -517,6 +524,208 @@ function showResults(game, animate = true) {
         }
       }, delay);
     });
+  }
+}
+
+function renderResultsMobile(resultsGrid, game, animate) {
+  const { score, validationResults, categories, letters, grid: answers } = game;
+  const totalEl = document.getElementById('results-total');
+  const subtitleEl = document.getElementById('results-subtitle');
+  const breakdown = document.getElementById('results-breakdown');
+
+  resultsGrid.className = 'f5-grid f5-grid--mobile';
+  let mobileResultIndex = 0;
+
+  // Cards container
+  const cardsWrap = document.createElement('div');
+  cardsWrap.className = 'f5-result-cards';
+
+  categories.forEach((cat, r) => {
+    const card = document.createElement('div');
+    card.className = 'f5-result-card' + (r === 0 ? ' active' : '');
+    card.dataset.index = r;
+
+    // Header: category name + row score
+    const header = document.createElement('div');
+    header.className = 'f5-result-card__header';
+    header.innerHTML = `
+      <div class="f5-result-card__category">${escapeHtml(cat.name)}</div>
+      <div class="f5-result-card__row-score">${score.rowTotals[r]}×${score.rowTotals[r]} = ${score.rowScores[r]}</div>
+    `;
+    card.appendChild(header);
+
+    // Fields
+    const fields = document.createElement('div');
+    fields.className = 'f5-result-card__fields';
+
+    letters.forEach((letter, c) => {
+      const result = validationResults[r][c];
+      const answer = answers[r][c];
+
+      const field = document.createElement('div');
+      field.className = 'f5-result-field';
+      if (!answer) field.classList.add('f5-result-field--empty');
+      else if (result.valid) field.classList.add('f5-result-field--valid');
+      else field.classList.add('f5-result-field--invalid');
+
+      // Letter badge
+      const letterEl = document.createElement('div');
+      letterEl.className = 'f5-result-field__letter';
+      letterEl.textContent = letter;
+      field.appendChild(letterEl);
+
+      // Content
+      const content = document.createElement('div');
+      content.className = 'f5-result-field__content';
+
+      const answerEl = document.createElement('div');
+      answerEl.className = 'f5-result-field__answer';
+      answerEl.textContent = answer || '—';
+      content.appendChild(answerEl);
+
+      // Status text
+      const status = document.createElement('div');
+      status.className = 'f5-result-field__status';
+      if (result.valid) {
+        status.style.color = 'var(--f5-valid)';
+        if (result.appealed) {
+          status.textContent = result.canonical ? `${result.canonical} — Overturned on appeal` : 'Overturned on appeal';
+        } else {
+          status.textContent = result.canonical || 'Valid';
+        }
+      } else if (answer) {
+        status.style.color = 'var(--f5-invalid)';
+        status.textContent = result.appealed ? 'Appeal denied' : 'Invalid';
+      } else {
+        status.style.color = 'var(--f5-text-muted)';
+        status.textContent = 'Empty';
+      }
+      content.appendChild(status);
+
+      // Explanation for rejected answers
+      if (!result.valid && answer && result.explanation) {
+        const expl = document.createElement('div');
+        expl.className = 'f5-result-field__explanation';
+        expl.textContent = result.explanation;
+        content.appendChild(expl);
+      }
+
+      // Appeal button
+      if (!result.valid && answer && !result.appealed) {
+        const appealBtn = document.createElement('button');
+        appealBtn.textContent = 'Appeal';
+        appealBtn.style.cssText = `
+          font-size: var(--f5-text-xs);
+          color: var(--f5-accent);
+          background: none;
+          border: 1px solid var(--f5-accent);
+          border-radius: var(--f5-radius-sm);
+          padding: 2px 10px;
+          margin-top: var(--f5-space-xs);
+          cursor: pointer;
+          font-family: var(--f5-font-ui);
+        `;
+        appealBtn.addEventListener('click', async () => {
+          appealBtn.disabled = true;
+          appealBtn.textContent = 'Reviewing...';
+
+          const newResult = await appeal(cat.name, letter, answer);
+          if (newResult) {
+            game.validationResults[r][c] = newResult;
+            game.score = calculateScore(game.validationResults);
+            storage.setLastGame(game);
+            showResults(game, false);
+          } else {
+            appealBtn.textContent = 'Error — retry';
+            appealBtn.disabled = false;
+          }
+        });
+        content.appendChild(appealBtn);
+      }
+
+      field.appendChild(content);
+
+      // Checkmark / X icon
+      const icon = document.createElement('div');
+      icon.className = 'f5-result-field__icon';
+      if (!answer) {
+        icon.textContent = '';
+      } else if (result.valid) {
+        icon.style.color = 'var(--f5-valid)';
+        icon.textContent = '✓';
+      } else {
+        icon.style.color = 'var(--f5-invalid)';
+        icon.textContent = '✗';
+      }
+      field.appendChild(icon);
+
+      fields.appendChild(field);
+    });
+
+    card.appendChild(fields);
+    cardsWrap.appendChild(card);
+  });
+
+  resultsGrid.appendChild(cardsWrap);
+
+  // Navigation bar
+  const nav = document.createElement('div');
+  nav.className = 'f5-mobile-nav';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'f5-mobile-nav__btn';
+  prevBtn.innerHTML = '&larr; Prev';
+  prevBtn.disabled = true;
+
+  const counter = document.createElement('div');
+  counter.className = 'f5-mobile-nav__counter';
+  counter.textContent = '1 / 5';
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'f5-mobile-nav__btn';
+  nextBtn.innerHTML = 'Next &rarr;';
+
+  function showResultCard(index) {
+    if (index < 0 || index >= 5) return;
+    mobileResultIndex = index;
+    const cards = cardsWrap.querySelectorAll('.f5-result-card');
+    cards.forEach((card, i) => card.classList.toggle('active', i === index));
+    counter.textContent = `${index + 1} / 5`;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === 4;
+  }
+
+  prevBtn.addEventListener('click', () => showResultCard(mobileResultIndex - 1));
+  nextBtn.addEventListener('click', () => showResultCard(mobileResultIndex + 1));
+
+  nav.appendChild(prevBtn);
+  nav.appendChild(counter);
+  nav.appendChild(nextBtn);
+  resultsGrid.appendChild(nav);
+
+  // Swipe support
+  let touchStartX = 0;
+  cardsWrap.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  cardsWrap.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0) showResultCard(mobileResultIndex + 1);
+      else showResultCard(mobileResultIndex - 1);
+    }
+  }, { passive: true });
+
+  showScreen('results');
+
+  // On mobile, skip cell-by-cell animation — just animate the score
+  if (animate) {
+    setTimeout(() => {
+      animateScore(totalEl, score.total);
+      subtitleEl.textContent = `${score.validCount} of 25 correct — ${score.total} of ${score.max} points`;
+      breakdown.style.opacity = '1';
+      breakdown.style.transition = 'opacity 0.4s ease';
+    }, 400);
   }
 }
 

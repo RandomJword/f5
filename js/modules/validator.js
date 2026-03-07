@@ -195,7 +195,7 @@ async function validate(answers, categories, letters) {
     } catch (retryErr) {
       // API failed — surface the error message
       console.error('[F5 Validator] API failed:', retryErr.message);
-      return null;
+      throw new Error(`Can't reach the AI judge: ${retryErr.message}`);
     }
   }
 

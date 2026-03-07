@@ -261,10 +261,7 @@ async function onTimeUp() {
     storage.clearGameState();
 
     if (!results) {
-      activeGame.status = 'abandoned';
-      alert('Validation failed — could not reach the AI judge. Returning to menu.');
-      showScreen('menu');
-      return;
+      throw new Error('No results returned from validator');
     }
 
     activeGame.status = 'scored';

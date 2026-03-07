@@ -27,13 +27,18 @@ async function call(systemPrompt, userMessage, maxTokens = 2000, { model } = {})
     }
     return await callDirect(systemPrompt, userMessage, maxTokens, useModel, apiKey);
   } catch (err) {
-    // Fallback to Sonnet on 5xx errors (only when originally using Haiku)
-    if (useModel === MODEL && /5\d\d/.test(err.message)) {
+    // Fallback to Sonnet on any error (only when originally using Haiku)
+    if (useModel === MODEL) {
       console.warn(`[F5 API] ${MODEL} failed (${err.message}), falling back to ${APPEAL_MODEL}`);
-      if (inviteCode && PROXY_URL) {
-        return callProxy(systemPrompt, userMessage, maxTokens, APPEAL_MODEL, inviteCode);
+      try {
+        if (inviteCode && PROXY_URL) {
+          return await callProxy(systemPrompt, userMessage, maxTokens, APPEAL_MODEL, inviteCode);
+        }
+        return await callDirect(systemPrompt, userMessage, maxTokens, APPEAL_MODEL, apiKey);
+      } catch (fallbackErr) {
+        console.error(`[F5 API] ${APPEAL_MODEL} also failed:`, fallbackErr.message);
+        throw new Error(`Both models failed. Haiku: ${err.message} | Sonnet: ${fallbackErr.message}`);
       }
-      return callDirect(systemPrompt, userMessage, maxTokens, APPEAL_MODEL, apiKey);
     }
     throw err;
   }

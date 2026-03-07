@@ -32,9 +32,11 @@
 - [x] **Mobile UX polish** — iOS Safari focus ring fix, overflow fix, vertical spacing tightened, bottom prev/next nav bar replacing top dots
 - [x] **WCAG AA contrast audit** — 16 fixes across all 5 themes
 - [x] **Defaults** — Library Study theme, lenient judging
-- [x] **Anti-repetition** — categories avoid last 25 games, letters avoid last 3 games, tracked at game creation (not just scoring)
+- [x] **Shuffle-bag categories** — exhausts all 120 categories before any repeat (24 unique games per cycle), letters avoid last 3 games
 - [x] **Knowledge cutoff handling** — prompt tells Claude to accept plausible unknowns; Wikipedia-informed re-validation fetches summaries and re-submits to Claude with context
 - [x] **Prompt tuning v2** — single-name surname detection (Willis case), knowledge cutoff instruction, spelling rule rewrite ("if you can identify intent, accept it")
+- [x] **Rejection explanation rows** — full explanation text moved from cells to spanning rows beneath (grid-column: span 5), keeps cells compact
+- [x] **Cache-busting** — query params on CSS/JS references in index.html to prevent stale browser cache
 - [x] **Themes reduced** — 8 → 5 (removed Pop Art, Brutalist Digital, one other)
 - [x] **GitHub Pages deploy** — https://randomjword.github.io/f5/
 - [x] **View Stats on results screen**

@@ -242,7 +242,7 @@ header h1 span{font-family:var(--font);font-weight:400;color:var(--text3);font-s
 
 <script>
 // --- DATA ---
-var STORAGE_KEY = 'f5-kanban-v3';
+var STORAGE_KEY = 'f5-kanban-v4';
 var TAG_DEFS = [
   {id:'ui',label:'UI',cls:'ui'},
   {id:'core',label:'Core',cls:'core'},
@@ -434,8 +434,8 @@ var DEFAULT_CARDS = [
   {id:genId(),col:'done',title:'Mobile UX Polish',
     desc:'iOS Safari focus ring fix (removed programmatic focus), overflow fix (html+body), vertical spacing tightened, bottom prev/next nav bar replacing top dot indicators.',
     tags:['ui','polish'],sprint:'post',created:106},
-  {id:genId(),col:'done',title:'Anti-Repetition System',
-    desc:'Categories avoid last 25 games, letters avoid last 3. Tracked at game creation via dedicated storage keys (not game history), so abandoned games also count.',
+  {id:genId(),col:'done',title:'Shuffle-Bag Categories',
+    desc:'Exhausts all 120 categories before any repeat (24 unique games per cycle). Letters avoid last 3 games. Tracked via category_cycle storage key, reset when pool runs dry.',
     tags:['core'],sprint:'post',created:107},
   {id:genId(),col:'done',title:'Knowledge Cutoff Handling',
     desc:'Prompt instructs Claude to accept plausible unknowns. Wikipedia-informed re-validation: fetches summary for rejected answers and re-submits to Claude with context for proper re-ruling.',
@@ -446,6 +446,12 @@ var DEFAULT_CARDS = [
   {id:genId(),col:'done',title:'Categories Expanded to 142',
     desc:'120 \u2192 142 categories across 9 tags. All categories in standard pool (removed difficulty filter). Interactive picker tool for curation.',
     tags:['data'],sprint:'post',created:110},
+  {id:genId(),col:'done',title:'Rejection Explanation Rows',
+    desc:'Full rejection/appeal-denied explanations moved from grid cells to spanning rows beneath (grid-column: span 5). Cells show short "Invalid"/"Appeal denied" labels. Keeps grid compact.',
+    tags:['ui','polish'],sprint:'post',created:111},
+  {id:genId(),col:'done',title:'Cache-Busting Query Params',
+    desc:'?v=N on all CSS and JS references in index.html. Prevents stale browser cache on GitHub Pages after code changes. Bump version on each deploy.',
+    tags:['infra'],sprint:'post',created:112},
 
   // --- BACKLOG ---
   {id:genId(),col:'backlog',title:'Self-Scoring Fallback',

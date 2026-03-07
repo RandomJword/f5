@@ -90,21 +90,30 @@ export default {
     }
 
     // Proxy to Anthropic (server-side — no dangerous-direct-browser-access needed)
-    const anthropicRes = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': ANTHROPIC_VERSION,
-      },
-      body: JSON.stringify({
-        model: body.model,
-        max_tokens: body.max_tokens || 2000,
-        temperature: body.temperature ?? 0,
-        system: body.system,
-        messages: body.messages,
-      }),
-    });
+    let anthropicRes;
+    try {
+      anthropicRes = await fetch(ANTHROPIC_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': env.ANTHROPIC_API_KEY,
+          'anthropic-version': ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify({
+          model: body.model,
+          max_tokens: body.max_tokens || 2000,
+          temperature: body.temperature ?? 0,
+          system: body.system,
+          messages: body.messages,
+        }),
+      });
+    } catch (fetchErr) {
+      // Anthropic unreachable or Worker timeout — return error WITH CORS headers
+      return new Response(JSON.stringify({ error: { message: `Upstream API error: ${fetchErr.message}` } }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+      });
+    }
 
     const responseBody = await anthropicRes.text();
 

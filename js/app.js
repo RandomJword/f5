@@ -285,7 +285,10 @@ async function onTimeUp() {
     showResults(activeGame);
   } catch (err) {
     console.error('[F5] onTimeUp error:', err);
-    alert('Error: ' + err.message);
+    const friendly = err.message.includes('Load failed') || err.message.includes('Failed to fetch')
+      ? 'Could not connect to the AI judge. Please check your internet connection and try again.'
+      : err.message;
+    alert(friendly);
     showScreen('menu');
   }
 }

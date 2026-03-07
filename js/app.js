@@ -369,6 +369,9 @@ function showResults(game, animate = true) {
       </div>`;
     resultsGrid.appendChild(catHeader);
 
+    // Track denied appeals for explanation rows
+    const deniedAppeals = [];
+
     // Cells
     letters.forEach((letter, c) => {
       const result = validationResults[r][c];
@@ -408,7 +411,8 @@ function showResults(game, animate = true) {
         badge.textContent = result.canonical || 'Valid';
       } else if (answer) {
         badge.style.color = 'var(--f5-invalid)';
-        badge.textContent = result.explanation || 'Invalid';
+        // Short label in cell — full explanation goes in spanning row below
+        badge.textContent = (result.appealed && !result.valid) ? 'Appeal denied' : (result.explanation || 'Invalid');
       } else {
         badge.style.color = 'var(--f5-text-muted)';
         badge.textContent = 'Empty';
@@ -449,7 +453,7 @@ function showResults(game, animate = true) {
         cell.appendChild(appealBtn);
       }
 
-      // Show appeal outcome label
+      // Show appeal outcome label (short — no explanation text)
       if (result.appealed && result.valid) {
         const overturnedEl = document.createElement('div');
         overturnedEl.style.fontSize = 'var(--f5-text-xs)';
@@ -457,17 +461,42 @@ function showResults(game, animate = true) {
         overturnedEl.style.fontStyle = 'italic';
         overturnedEl.textContent = 'Overturned on appeal';
         cell.appendChild(overturnedEl);
-      } else if (result.appealed && !result.valid) {
-        const upheldEl = document.createElement('div');
-        upheldEl.style.fontSize = 'var(--f5-text-xs)';
-        upheldEl.style.color = 'var(--f5-text-muted)';
-        upheldEl.style.fontStyle = 'italic';
-        upheldEl.textContent = 'Appeal denied';
-        cell.appendChild(upheldEl);
+      }
+
+      // Collect denied appeals for explanation rows
+      if (result.appealed && !result.valid && answer) {
+        deniedAppeals.push({ letter, answer, explanation: result.explanation || '', col: c });
       }
 
       resultsGrid.appendChild(cell);
     });
+
+    // Insert explanation rows for denied appeals (span all 5 letter columns)
+    for (const da of deniedAppeals) {
+      // Empty spacer in column 1 (category label column)
+      const spacer = document.createElement('div');
+      spacer.style.cssText = `
+        background: var(--f5-grid-header-bg);
+        border-right: var(--f5-border-width) solid var(--f5-grid-cell-border);
+        border-bottom: var(--f5-border-width) solid var(--f5-grid-cell-border);
+      `;
+      resultsGrid.appendChild(spacer);
+
+      // Explanation spanning columns 2–6
+      const explRow = document.createElement('div');
+      explRow.style.cssText = `
+        grid-column: span 5;
+        padding: var(--f5-space-sm) var(--f5-space-md);
+        font-size: var(--f5-text-xs);
+        line-height: 1.5;
+        color: var(--f5-text-muted);
+        background: var(--f5-grid-cell-bg);
+        border-bottom: var(--f5-border-width) solid var(--f5-grid-cell-border);
+        border-left: 3px solid var(--f5-invalid);
+      `;
+      explRow.innerHTML = `<span style="color:var(--f5-invalid);font-weight:var(--f5-weight-bold);">${da.letter}: ${escapeHtml(da.answer)}</span> — ${escapeHtml(da.explanation)}`;
+      resultsGrid.appendChild(explRow);
+    }
   });
 
   showScreen('results');
@@ -523,6 +552,12 @@ function showResults(game, animate = true) {
       }, delay);
     });
   }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function animateScore(el, target) {

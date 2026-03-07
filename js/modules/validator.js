@@ -112,7 +112,9 @@ Rules:
    CRITICAL: Use the CATEGORY as context for spelling interpretation. If an answer doesn't fit the category as written, check if a close spelling variant DOES fit. The category is the strongest clue for intent. Example: "Kawaii" under Islands is clearly "Kauai" (Hawaiian island) — accept it. "Koalla" under Animals is clearly "Koala" — accept it. Do NOT match the answer to an unrelated meaning when a category-relevant correction exists.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
-9. When in doubt, accept it. The player is playing solo for fun.
+9. For creative/subjective categories (e.g., "Things That Are Round", "Excuses to Skip Work", "Exclamations", "Things in a Junk Drawer") and slang categories (e.g., "GenX Slang", "Baby Boomer Slang"): be VERY loose. If the answer is a reasonable, defensible response, accept it. These are meant to be fun and creative.
+10. For decade-specific categories (e.g., "80s Movies", "70s Songs"): accept the answer if it is plausibly from that era. Do not reject over borderline release dates.
+11. When in doubt, accept it. The player is playing solo for fun.
 
 Respond with a JSON array only. No markdown fences. No extra text.
 Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
@@ -207,7 +209,9 @@ async function validate(answers, categories, letters) {
 
     results[item.row][item.col] = result;
 
-    if (FICTION_CATEGORIES.has(item.category)) continue;
+    // Skip Wikipedia verification for fiction and humor categories
+    const itemTag = categories[item.row].tag;
+    if (FICTION_CATEGORIES.has(item.category) || itemTag === 'humor') continue;
 
     if (result.valid) {
       // Verify valid answers actually exist

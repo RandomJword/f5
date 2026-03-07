@@ -26,21 +26,43 @@
     <div class="f5-header__actions">
       <button class="f5-btn--ghost" id="btn-header-settings" data-navigate="settings" aria-label="Settings">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M3.4 3.4l1.4 1.4M15.2 15.2l1.4 1.4M3.4 16.6l1.4-1.4M15.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="4" cy="10" r="1.5" fill="currentColor"/>
+          <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
+          <circle cx="16" cy="10" r="1.5" fill="currentColor"/>
         </svg>
       </button>
     </div>
   </header>
 
 
-  <!-- ========== SCREEN: SETUP (API Key) ========== -->
+  <!-- ========== SCREEN: SETUP (Auth) ========== -->
   <main id="screen-setup" class="screen" role="main" aria-label="Setup">
-    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+    <div class="f5-screen-center">
       <h1 class="f5-screen-title" tabindex="-1">Welcome to F5</h1>
-      <p class="f5-screen-subtitle">Facts in Five — reimagined. You'll need a Claude API key to play.</p>
+      <p class="f5-screen-subtitle">Facts in Five — reimagined. 5 categories. 5 letters. 5 minutes.</p>
 
-      <form id="setup-form">
+      <!-- Invite code form (shown when proxy is configured) -->
+      <form id="setup-form-invite" style="display: none;">
+        <div class="f5-form-group">
+          <label class="f5-label" for="invite-code-input">Invite Code</label>
+          <input
+            type="text"
+            id="invite-code-input"
+            class="f5-input"
+            placeholder="Enter your invite code"
+            autocomplete="off"
+            maxlength="50"
+          >
+          <p class="f5-form-hint">Got a code from whoever invited you? Enter it here to play for free.</p>
+        </div>
+        <button type="submit" class="f5-btn f5-btn--large">Start Playing</button>
+        <div style="text-align: center; margin-top: var(--f5-space-lg);">
+          <button type="button" class="f5-btn--ghost" id="btn-show-apikey" style="font-size: var(--f5-text-sm);">Use your own API key instead</button>
+        </div>
+      </form>
+
+      <!-- API key form -->
+      <form id="setup-form-apikey">
         <div class="f5-form-group">
           <label class="f5-label" for="api-key-input">Anthropic API Key</label>
           <input
@@ -49,14 +71,16 @@
             class="f5-input"
             placeholder="sk-ant-..."
             autocomplete="off"
-            required
             maxlength="200"
           >
           <p class="f5-form-hint">
-            Your key stays on this device in localStorage. It is never sent anywhere except directly to the Anthropic API for answer validation. The key is visible in browser developer tools — this is inherent to client-side API calls.
+            Your key stays on this device in localStorage. It is never sent anywhere except directly to the Anthropic API for answer validation.
           </p>
         </div>
         <button type="submit" class="f5-btn f5-btn--large">Start Playing</button>
+        <div id="btn-show-invite-wrap" style="text-align: center; margin-top: var(--f5-space-lg); display: none;">
+          <button type="button" class="f5-btn--ghost" id="btn-show-invite" style="font-size: var(--f5-text-sm);">Use an invite code instead</button>
+        </div>
       </form>
     </div>
   </main>
@@ -64,7 +88,7 @@
 
   <!-- ========== SCREEN: MENU ========== -->
   <main id="screen-menu" class="screen" role="main" aria-label="Main Menu">
-    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <div class="f5-screen-center" style="align-items: center; text-align: center;">
       <h1 class="f5-screen-title" tabindex="-1" style="font-size: var(--f5-text-3xl); margin-bottom: var(--f5-space-xs);">F5</h1>
       <p class="f5-screen-subtitle" style="margin-bottom: var(--f5-space-2xl);">5 categories. 5 letters. 5 minutes.</p>
 
@@ -107,7 +131,7 @@
 
   <!-- ========== SCREEN: VALIDATING ========== -->
   <main id="screen-validating" class="screen" role="main" aria-label="Validating answers">
-    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <div class="f5-screen-center" style="align-items: center; text-align: center;">
       <div class="f5-spinner" style="margin-bottom: var(--f5-space-lg);"></div>
       <h2 class="f5-screen-title" tabindex="-1">Judging Your Answers</h2>
       <p class="f5-screen-subtitle">Claude is reviewing your 25 cells...</p>
@@ -179,11 +203,11 @@
       </div>
     </div>
 
-    <div class="f5-card">
+    <div class="f5-card" id="settings-auth">
       <div class="f5-form-group" style="margin-bottom: 0;">
-        <label class="f5-label">API Key</label>
-        <p style="font-family: var(--f5-font-mono); font-size: var(--f5-text-sm); color: var(--f5-text-muted); margin-bottom: var(--f5-space-md);" id="api-key-display">sk-ant-...****</p>
-        <button class="f5-btn f5-btn--outline" id="btn-clear-key" style="font-size: var(--f5-text-xs);">Remove API Key</button>
+        <label class="f5-label" id="auth-mode-label">API Key</label>
+        <p style="font-family: var(--f5-font-mono); font-size: var(--f5-text-sm); color: var(--f5-text-muted); margin-bottom: var(--f5-space-md);" id="auth-display">sk-ant-...****</p>
+        <button class="f5-btn f5-btn--outline" id="btn-clear-auth" style="font-size: var(--f5-text-xs);">Remove API Key</button>
       </div>
     </div>
   </main>

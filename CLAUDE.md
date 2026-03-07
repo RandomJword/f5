@@ -16,7 +16,7 @@ A modern digital version of the classic 1964 parlor game. 5 categories × 5 lett
 - **CSS Custom Properties** define a variable contract (`--f5-bg`, `--f5-text`, `--f5-accent`, `--f5-font-heading`, `--f5-radius`, etc.)
 - **Theme classes on `<body>`** override variables + add scoped structural/animation rules
 - **Components are theme-unaware** — they only reference `var(--f5-*)`, never hard-coded values
-- **8 themes:** retro, minimal, neon, library, popart, newspaper, botanical, brutalist
+- **5 themes:** newspaper, retro, minimal, library, botanical
 - **`theme-manager.js`** reads/writes preference to localStorage, swaps body class, lazy-loads Google Fonts
 
 ## Scoring System

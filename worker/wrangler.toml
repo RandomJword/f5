@@ -1,0 +1,27 @@
+# F5 API Proxy — Cloudflare Worker config
+#
+# Setup:
+#   1. npm install -g wrangler
+#   2. wrangler login
+#   3. wrangler kv:namespace create RATE_LIMIT
+#      (copy the ID it gives you into the [[kv_namespaces]] below)
+#   4. wrangler secret put ANTHROPIC_API_KEY
+#   5. wrangler secret put INVITE_CODE
+#   6. wrangler deploy
+#
+# Then update PROXY_URL in js/modules/claude-api.js with your worker URL.
+
+name = "f5-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Comma-separated origins allowed to call this worker.
+# Set to your GitHub Pages URL once deployed, e.g.:
+# ALLOWED_ORIGINS = "https://randomjword.github.io"
+# Use "*" during development.
+ALLOWED_ORIGINS = "*"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "2a89f664a7e64bd48256658ab8351de0"

@@ -7,6 +7,8 @@ import * as grid from './modules/grid.js';
 import { createTimer, formatTime } from './modules/timer.js';
 import { newGame, calculateScore } from './modules/game-engine.js';
 import { validate, appeal } from './modules/validator.js';
+import { compute as computeStats } from './modules/stats.js';
+import { hasProxy } from './modules/claude-api.js';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];
@@ -19,13 +21,10 @@ let lastAnnouncedSeconds = null;
 function init() {
   themeManager.init();
 
-  // Check if we have an API key
-  const apiKey = storage.getApiKey();
-
   // One-time cache clear for prompt v2 upgrade
-  if (!storage.get('cache_v3')) {
+  if (!storage.get('cache_v5')) {
     storage.clearCache();
-    storage.set('cache_v3', true);
+    storage.set('cache_v5', true);
   }
 
   // Check for crash recovery
@@ -35,11 +34,15 @@ function init() {
     storage.clearGameState();
   }
 
-  // Show masked API key in settings
-  updateApiKeyDisplay(apiKey);
+  // Setup screen: show invite code form if proxy is configured
+  initSetupForms();
+
+  // Update settings auth display
+  updateAuthDisplay();
 
   // Route to appropriate screen
-  if (!apiKey) {
+  const authMode = storage.getAuthMode();
+  if (!authMode) {
     showScreen('setup');
   } else {
     showScreen('menu');
@@ -64,20 +67,79 @@ function showScreen(screenId) {
   }
 }
 
-function bindGlobalEvents() {
-  // Setup screen — save API key
-  const setupForm = document.getElementById('setup-form');
-  if (setupForm) {
-    setupForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = document.getElementById('api-key-input');
-      const key = input.value.trim();
-      if (key) {
-        storage.setApiKey(key);
-        showScreen('menu');
-      }
+function initSetupForms() {
+  const inviteForm = document.getElementById('setup-form-invite');
+  const apikeyForm = document.getElementById('setup-form-apikey');
+  const showApikeyBtn = document.getElementById('btn-show-apikey');
+  const showInviteBtn = document.getElementById('btn-show-invite');
+  const showInviteWrap = document.getElementById('btn-show-invite-wrap');
+
+  if (hasProxy()) {
+    // Proxy configured: show invite code form as primary
+    inviteForm.style.display = '';
+    apikeyForm.style.display = 'none';
+    showInviteWrap.style.display = '';
+
+    showApikeyBtn.addEventListener('click', () => {
+      inviteForm.style.display = 'none';
+      apikeyForm.style.display = '';
+    });
+
+    showInviteBtn.addEventListener('click', () => {
+      apikeyForm.style.display = 'none';
+      inviteForm.style.display = '';
     });
   }
+  // If no proxy, API key form is already visible by default
+
+  // Invite code submission
+  inviteForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = document.getElementById('invite-code-input').value.trim();
+    if (code) {
+      storage.setInviteCode(code);
+      storage.setApiKey(''); // clear any old API key
+      updateAuthDisplay();
+      showScreen('menu');
+    }
+  });
+
+  // API key submission
+  apikeyForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const key = document.getElementById('api-key-input').value.trim();
+    if (key) {
+      storage.setApiKey(key);
+      storage.setInviteCode(''); // clear any old invite code
+      updateAuthDisplay();
+      showScreen('menu');
+    }
+  });
+}
+
+function updateAuthDisplay() {
+  const label = document.getElementById('auth-mode-label');
+  const display = document.getElementById('auth-display');
+  const clearBtn = document.getElementById('btn-clear-auth');
+
+  const mode = storage.getAuthMode();
+  if (mode === 'invite') {
+    label.textContent = 'Invite Code';
+    display.textContent = 'Playing with invite code';
+    clearBtn.textContent = 'Remove Invite Code';
+  } else if (mode === 'apikey') {
+    const key = storage.getApiKey();
+    label.textContent = 'API Key';
+    display.textContent = key ? key.slice(0, 7) + '...' + key.slice(-4) : 'No key set';
+    clearBtn.textContent = 'Remove API Key';
+  } else {
+    label.textContent = 'Authentication';
+    display.textContent = 'Not configured';
+    clearBtn.textContent = 'Sign Out';
+  }
+}
+
+function bindGlobalEvents() {
 
   // Menu — new game
   const newGameBtn = document.getElementById('btn-new-game');
@@ -91,6 +153,7 @@ function bindGlobalEvents() {
   const statsBtn = document.getElementById('btn-stats');
   if (statsBtn) {
     statsBtn.addEventListener('click', () => {
+      renderStats();
       showScreen('stats');
     });
   }
@@ -139,11 +202,13 @@ function bindGlobalEvents() {
     });
   }
 
-  // Settings — clear API key
-  const clearKeyBtn = document.getElementById('btn-clear-key');
-  if (clearKeyBtn) {
-    clearKeyBtn.addEventListener('click', () => {
+  // Settings — clear auth (API key or invite code)
+  const clearAuthBtn = document.getElementById('btn-clear-auth');
+  if (clearAuthBtn) {
+    clearAuthBtn.addEventListener('click', () => {
       storage.setApiKey('');
+      storage.setInviteCode('');
+      updateAuthDisplay();
       showScreen('setup');
     });
   }
@@ -374,13 +439,14 @@ function showResults(game, animate = true) {
             game.score = calculateScore(game.validationResults);
             showResults(game, false);
           } else {
-            appealBtn.textContent = 'Appeal failed';
+            appealBtn.textContent = 'Error — retry';
+            appealBtn.disabled = false;
           }
         });
         cell.appendChild(appealBtn);
       }
 
-      // Show "Overturned" label for successful appeals
+      // Show appeal outcome label
       if (result.appealed && result.valid) {
         const overturnedEl = document.createElement('div');
         overturnedEl.style.fontSize = 'var(--f5-text-xs)';
@@ -388,6 +454,13 @@ function showResults(game, animate = true) {
         overturnedEl.style.fontStyle = 'italic';
         overturnedEl.textContent = 'Overturned on appeal';
         cell.appendChild(overturnedEl);
+      } else if (result.appealed && !result.valid) {
+        const upheldEl = document.createElement('div');
+        upheldEl.style.fontSize = 'var(--f5-text-xs)';
+        upheldEl.style.color = 'var(--f5-text-muted)';
+        upheldEl.style.fontStyle = 'italic';
+        upheldEl.textContent = 'Appeal denied';
+        cell.appendChild(upheldEl);
       }
 
       resultsGrid.appendChild(cell);
@@ -463,13 +536,113 @@ function animateScore(el, target) {
   requestAnimationFrame(tick);
 }
 
-function updateApiKeyDisplay(key) {
-  const display = document.getElementById('api-key-display');
-  if (display && key) {
-    display.textContent = key.slice(0, 7) + '...' + key.slice(-4);
-  } else if (display) {
-    display.textContent = 'No key set';
+
+function renderStats() {
+  const container = document.getElementById('stats-content');
+  const stats = computeStats();
+
+  if (!stats) {
+    container.innerHTML = '<p style="color: var(--f5-text-muted);">No games played yet.</p>';
+    return;
   }
+
+  // Summary cards
+  let html = `<div class="f5-stats-cards">
+    <div class="f5-card f5-stat-card">
+      <div class="f5-stat-value">${stats.totalGames}</div>
+      <div class="f5-stat-label">Games</div>
+    </div>
+    <div class="f5-card f5-stat-card">
+      <div class="f5-stat-value">${stats.bestScore}</div>
+      <div class="f5-stat-label">Best</div>
+    </div>
+    <div class="f5-card f5-stat-card">
+      <div class="f5-stat-value">${stats.avgScore}</div>
+      <div class="f5-stat-label">Average</div>
+    </div>
+    <div class="f5-card f5-stat-card">
+      <div class="f5-stat-value">${stats.streak}</div>
+      <div class="f5-stat-label">Streak</div>
+    </div>
+  </div>`;
+
+  // Score trend (sparkline bar chart)
+  if (stats.recent.length > 1) {
+    const max = 250;
+    html += `<div class="f5-card" style="margin-top: var(--f5-space-lg);">
+      <div class="f5-stat-label" style="margin-bottom: var(--f5-space-md);">Score History</div>
+      <div class="f5-sparkline">
+        ${stats.recent.map(g => {
+          const pct = Math.max((g.score.total / max) * 100, 2);
+          return `<div class="f5-sparkline__bar" style="height: ${pct}%" title="${g.score.total} pts"></div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Best/worst categories
+  if (stats.bestCategories.length > 0) {
+    html += `<div class="f5-card" style="margin-top: var(--f5-space-lg);">
+      <div class="f5-stat-label" style="margin-bottom: var(--f5-space-sm);">Best Categories</div>
+      ${stats.bestCategories.map(c =>
+        `<div class="f5-stat-row">
+          <span>${c.name}</span>
+          <span style="color: var(--f5-valid); font-weight: var(--f5-weight-bold);">${Math.round(c.rate * 100)}%</span>
+        </div>`
+      ).join('')}
+    </div>`;
+
+    if (stats.worstCategories.length > 0 && stats.worstCategories[0].rate < 1) {
+      html += `<div class="f5-card" style="margin-top: var(--f5-space-md);">
+        <div class="f5-stat-label" style="margin-bottom: var(--f5-space-sm);">Toughest Categories</div>
+        ${stats.worstCategories.map(c =>
+          `<div class="f5-stat-row">
+            <span>${c.name}</span>
+            <span style="color: var(--f5-invalid); font-weight: var(--f5-weight-bold);">${Math.round(c.rate * 100)}%</span>
+          </div>`
+        ).join('')}
+      </div>`;
+    }
+  }
+
+  // Letter performance
+  if (stats.letterEntries.length > 0) {
+    html += `<div class="f5-card" style="margin-top: var(--f5-space-md);">
+      <div class="f5-stat-label" style="margin-bottom: var(--f5-space-sm);">Letters</div>
+      <div class="f5-letter-grid">
+        ${stats.letterEntries.map(l => {
+          const pct = Math.round(l.rate * 100);
+          const color = pct >= 70 ? 'var(--f5-valid)' : pct >= 40 ? 'var(--f5-text-muted)' : 'var(--f5-invalid)';
+          return `<div class="f5-letter-stat">
+            <div style="font-weight: var(--f5-weight-bold);">${l.letter}</div>
+            <div style="font-size: var(--f5-text-xs); color: ${color};">${pct}%</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Recent games list
+  html += `<div style="margin-top: var(--f5-space-xl);">
+    <div class="f5-stat-label" style="margin-bottom: var(--f5-space-md);">Recent Games</div>
+    ${stats.recent.slice().reverse().map(g => {
+      const date = new Date(g.date);
+      const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const timeStr = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      return `<div class="f5-card f5-history-row">
+        <div>
+          <div style="font-weight: var(--f5-weight-medium);">${g.score.total} pts</div>
+          <div style="font-size: var(--f5-text-xs); color: var(--f5-text-muted);">${g.score.validCount}/25 correct</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: var(--f5-text-sm);">${dateStr}</div>
+          <div style="font-size: var(--f5-text-xs); color: var(--f5-text-muted);">${timeStr}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  container.innerHTML = html;
 }
 
 // Boot

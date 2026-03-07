@@ -4,13 +4,50 @@
 import * as api from './claude-api.js';
 import * as storage from './storage.js';
 
+// Categories where answers are fictional — skip Wikipedia verification
+const FICTION_CATEGORIES = new Set([
+  'Cartoon Characters', 'Fictional Characters', 'Mythological Figures',
+  'Superheroes', 'Video Game Characters', 'Literary Characters',
+  'Disney Characters', 'Superhero Characters', 'Fictional Detectives',
+]);
+
+/**
+ * Check if an answer exists on Wikipedia.
+ * Returns true if found, false if not found, null on error (treat as found).
+ */
+async function wikiCheck(query) {
+  try {
+    const encoded = encodeURIComponent(query);
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`,
+      { headers: { 'Api-User-Agent': 'F5Game/1.0' } }
+    );
+    if (res.ok) return true;
+    if (res.status === 404) {
+      // Try search as fallback (handles alternate names)
+      const searchRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encoded}&srlimit=1&format=json&origin=*`
+      );
+      if (searchRes.ok) {
+        const data = await searchRes.json();
+        return data.query.search.length > 0;
+      }
+    }
+    return null; // Error — don't penalize
+  } catch {
+    return null; // Network error — don't penalize
+  }
+}
+
 const SYSTEM_PROMPT_STRICT = `You are the judge for "Facts in Five."
 Rules:
-1. Answer must belong to the category. Interpret categories BROADLY:
-   - "Authors" includes anyone who has published written works: novelists, essayists, cartoonists who published books, poets, playwrights, etc.
+1. Answer must belong to the category. Interpret categories BROADLY — do NOT split hairs:
+   - A person who has EVER published written works counts as an "Author" — even if they are primarily known for something else. Newton (Principia Mathematica) = valid Author. Einstein = valid Author. Churchill = valid Author.
    - "Mythological Figures" includes figures from ALL mythological and religious traditions worldwide: Greek, Roman, Norse, Hindu, Buddhist, Shinto, Egyptian, Judeo-Christian, Islamic, Indigenous, African, etc. Biblical figures ARE mythological figures.
    - "Scientists" includes anyone who made significant contributions to any field of science.
-   - Apply this broad interpretation to all categories.
+   - "Team Sports" includes ANY sport played by teams, even if also categorizable as something else. Polo, rowing, relay races, doubles tennis — all valid.
+   - CRITICAL: Do NOT reject because the answer is "primarily known as" something else. People and things belong to MULTIPLE categories. If the answer fits the category AT ALL, accept it.
+   - Apply this broad interpretation to ALL categories.
 2. The letter check depends on the category type:
    - People (authors, scientists, athletes, etc.): the SURNAME determines the letter. Players may write first name, full name, or surname only. Example: "Tennessee Williams" is valid for W because surname "Williams" starts with W. "Einstein" and "Albert Einstein" are both valid for E.
    - Titles (movies, books, songs, etc.): ignore leading articles "The", "A", "An". Example: "The Godfather" is valid for G.
@@ -20,7 +57,7 @@ Rules:
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
 4. Proper names and full words required. Abbreviations like "JFK" or "USA" are not accepted — write "Kennedy" or "United States."
 5. Spelling must be correct or very close (one letter off is OK if clearly recognizable).
-6. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Key (Blue Jays pitcher)". IGNORE the parenthetical for letter matching — it is just context to help you identify the answer. Judge the name itself.
+6. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 7. When in doubt about whether someone/something is real, give the benefit of the doubt if the answer is plausible and specific.
 
 Respond with a JSON array only. No markdown fences. No extra text.
@@ -28,11 +65,13 @@ Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."
 
 const SYSTEM_PROMPT_LENIENT = `You are the judge for "Facts in Five."
 Rules:
-1. Answer must belong to the category. Interpret categories BROADLY:
-   - "Authors" includes anyone who has published written works: novelists, essayists, cartoonists who published books, poets, playwrights, etc.
+1. Answer must belong to the category. Interpret categories BROADLY — do NOT split hairs:
+   - A person who has EVER published written works counts as an "Author" — even if they are primarily known for something else. Newton (Principia Mathematica) = valid Author. Einstein = valid Author. Churchill = valid Author.
    - "Mythological Figures" includes figures from ALL mythological and religious traditions worldwide: Greek, Roman, Norse, Hindu, Buddhist, Shinto, Egyptian, Judeo-Christian, Islamic, Indigenous, African, etc. Biblical figures ARE mythological figures.
    - "Scientists" includes anyone who made significant contributions to any field of science.
-   - Apply this broad interpretation to all categories.
+   - "Team Sports" includes ANY sport played by teams, even if also categorizable as something else. Polo, rowing, relay races, doubles tennis — all valid.
+   - CRITICAL: Do NOT reject because the answer is "primarily known as" something else. People and things belong to MULTIPLE categories. If the answer fits the category AT ALL, accept it.
+   - Apply this broad interpretation to ALL categories.
 2. The letter check depends on the category type:
    - People (authors, scientists, athletes, etc.): the SURNAME determines the letter. Players may write first name, full name, or surname only. Example: "Tennessee Williams" is valid for W because surname "Williams" starts with W. "Einstein" and "Albert Einstein" are both valid for E.
    - Titles (movies, books, songs, etc.): ignore leading articles "The", "A", "An". Example: "The Godfather" is valid for G.
@@ -42,7 +81,7 @@ Rules:
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
 4. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
 5. Minor spelling errors are accepted if the intended answer is clearly recognizable.
-6. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Key (Blue Jays pitcher)". IGNORE the parenthetical for letter matching — it is just context to help you identify the answer. Judge the name itself.
+6. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 7. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
 8. When in doubt, accept it. The player is playing solo for fun.
 
@@ -126,6 +165,9 @@ async function validate(answers, categories, letters) {
     resultMap.set(r.id, r);
   }
 
+  // Map results and collect items needing Wikipedia verification
+  const toVerify = [];
+
   for (const item of toSubmit) {
     const apiResult = resultMap.get(item.id);
     const result = apiResult
@@ -134,7 +176,33 @@ async function validate(answers, categories, letters) {
 
     results[item.row][item.col] = result;
 
-    // Cache the result
+    // Queue Wikipedia check for valid non-fiction answers
+    if (result.valid && !FICTION_CATEGORIES.has(item.category)) {
+      toVerify.push({ item, result, query: result.canonical || item.answer });
+    }
+  }
+
+  // Run Wikipedia checks in parallel
+  if (toVerify.length > 0) {
+    const checks = await Promise.all(
+      toVerify.map(v => wikiCheck(v.query))
+    );
+
+    for (let i = 0; i < toVerify.length; i++) {
+      const found = checks[i];
+      if (found === false) {
+        // Wikipedia couldn't find it — override to invalid
+        const v = toVerify[i];
+        v.result.valid = false;
+        v.result.explanation = `Could not verify "${v.query}" exists. If this is wrong, appeal.`;
+        results[v.item.row][v.item.col] = v.result;
+      }
+    }
+  }
+
+  // Cache all results
+  for (const item of toSubmit) {
+    const result = results[item.row][item.col];
     storage.setCachedResult(item.category, item.letter, item.answer, strictness, result);
   }
 
@@ -171,6 +239,9 @@ Rules for judging:
 - For places: first word counts. "New York" = N.
 - For everything else: first letter of the answer.
 - Must be real and verifiable (fictional OK if category is about fiction).
+- If the answer includes a parenthetical note like "(gravity)" or "(Soviet leader)", IGNORE it completely. Do NOT fact-check it or use it for/against the answer. It is just a disambiguation hint.
+- Do NOT reject because the person/thing is "primarily known as" something else. If it fits the category AT ALL, accept it.
+- Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
 ${strictness === 'lenient'
   ? '- Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.'
   : '- Be fair but precise. Accept answers that genuinely fit the category and letter, even if unusual or obscure.'}
@@ -180,31 +251,36 @@ The first judge may have been wrong. Consider carefully whether this answer legi
 Respond with JSON only. No markdown fences.
 {"valid":boolean,"explanation":"...","canonical":"..."}`;
 
-  try {
-    const responseText = await api.call(
-      'You are a fair and thoughtful appeals judge.',
-      prompt,
-      500,
-      { model: api.APPEAL_MODEL }
-    );
-    const result = parseResponse(responseText);
-    // parseResponse returns an array or object — handle both
-    const parsed = Array.isArray(result) ? result[0] : result;
+  // Try Sonnet first, fall back to Haiku if Sonnet model unavailable
+  const modelsToTry = [api.APPEAL_MODEL, api.MODEL];
 
-    const appealResult = {
-      valid: parsed.valid,
-      explanation: parsed.explanation || '',
-      canonical: parsed.canonical || '',
-      appealed: true,
-    };
+  for (const model of modelsToTry) {
+    try {
+      const responseText = await api.call(
+        'You are a fair and thoughtful appeals judge.',
+        prompt,
+        500,
+        { model }
+      );
+      const result = parseResponse(responseText);
+      const parsed = Array.isArray(result) ? result[0] : result;
 
-    // Update cache with appeal result
-    storage.setCachedResult(category, letter, answer, strictness, appealResult);
+      const appealResult = {
+        valid: parsed.valid,
+        explanation: parsed.explanation || '',
+        canonical: parsed.canonical || '',
+        appealed: true,
+      };
 
-    return appealResult;
-  } catch {
-    return null;
+      storage.setCachedResult(category, letter, answer, strictness, appealResult);
+      return appealResult;
+    } catch (err) {
+      console.error(`[F5 Appeal] ${model} failed:`, err.message);
+      continue;
+    }
   }
+
+  return null;
 }
 
 export { validate, appeal };

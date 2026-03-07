@@ -38,6 +38,20 @@ function setApiKey(apiKey) {
   set('api_key', apiKey);
 }
 
+function getInviteCode() {
+  return get('invite_code', '');
+}
+
+function setInviteCode(code) {
+  set('invite_code', code);
+}
+
+function getAuthMode() {
+  if (getApiKey()) return 'apikey';
+  if (getInviteCode()) return 'invite';
+  return null;
+}
+
 function getTheme() {
   return get('theme', '');
 }
@@ -138,6 +152,9 @@ export {
   remove,
   getApiKey,
   setApiKey,
+  getInviteCode,
+  setInviteCode,
+  getAuthMode,
   getTheme,
   setTheme,
   getStrictness,

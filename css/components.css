@@ -221,6 +221,101 @@
 /* ============================================================
    VISUALLY HIDDEN (a11y)
    ============================================================ */
+/* ============================================================
+   STATS
+   ============================================================ */
+.f5-stats-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--f5-space-md);
+}
+
+.f5-stat-card {
+  text-align: center;
+  padding: var(--f5-space-md) var(--f5-space-sm);
+}
+
+.f5-stat-value {
+  font-family: var(--f5-font-heading);
+  font-size: var(--f5-text-2xl);
+  font-weight: var(--f5-weight-black);
+  line-height: 1.1;
+}
+
+.f5-stat-label {
+  font-family: var(--f5-font-ui);
+  font-size: var(--f5-text-xs);
+  font-weight: var(--f5-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--f5-text-muted);
+}
+
+.f5-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--f5-space-xs) 0;
+  font-size: var(--f5-text-sm);
+  border-bottom: var(--f5-border-width) solid var(--f5-border);
+}
+
+.f5-stat-row:last-child {
+  border-bottom: none;
+}
+
+.f5-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 80px;
+}
+
+.f5-sparkline__bar {
+  flex: 1;
+  min-width: 0;
+  background: var(--f5-accent);
+  border-radius: var(--f5-radius-sm) var(--f5-radius-sm) 0 0;
+  opacity: 0.7;
+  transition: opacity var(--f5-transition-fast);
+}
+
+.f5-sparkline__bar:hover {
+  opacity: 1;
+}
+
+.f5-sparkline__bar:last-child {
+  opacity: 1;
+}
+
+.f5-letter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--f5-space-sm);
+}
+
+.f5-letter-stat {
+  text-align: center;
+  min-width: 32px;
+}
+
+.f5-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--f5-space-sm);
+  padding: var(--f5-space-sm) var(--f5-space-md);
+}
+
+@media (max-width: 600px) {
+  .f5-stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   VISUALLY HIDDEN (a11y)
+   ============================================================ */
 .f5-sr-only {
   position: absolute;
   width: 1px;

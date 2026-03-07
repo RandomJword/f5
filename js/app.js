@@ -196,6 +196,15 @@ function bindGlobalEvents() {
     });
   }
 
+  // Results — view stats
+  const resultsStatsBtn = document.getElementById('btn-results-stats');
+  if (resultsStatsBtn) {
+    resultsStatsBtn.addEventListener('click', () => {
+      renderStats();
+      showScreen('stats');
+    });
+  }
+
   // Settings — clear auth (API key or invite code)
   const clearAuthBtn = document.getElementById('btn-clear-auth');
   if (clearAuthBtn) {

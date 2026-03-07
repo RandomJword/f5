@@ -89,40 +89,6 @@ function renderMobile() {
   cells = [];
   mobileIndex = 0;
 
-  // Dot navigation
-  const nav = document.createElement('div');
-  nav.className = 'f5-mobile-nav';
-
-  const prevBtn = document.createElement('button');
-  prevBtn.className = 'f5-mobile-nav__arrow';
-  prevBtn.textContent = '\u2039';
-  prevBtn.setAttribute('aria-label', 'Previous category');
-  prevBtn.addEventListener('click', () => showCard(mobileIndex - 1));
-
-  const dots = document.createElement('div');
-  dots.className = 'f5-mobile-nav__dots';
-  dots.id = 'mobile-dots';
-
-  for (let i = 0; i < ROWS; i++) {
-    const dot = document.createElement('button');
-    dot.className = 'f5-mobile-nav__dot' + (i === 0 ? ' active' : '');
-    dot.dataset.index = i;
-    dot.setAttribute('aria-label', `Category ${i + 1}`);
-    dot.addEventListener('click', () => showCard(i));
-    dots.appendChild(dot);
-  }
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'f5-mobile-nav__arrow';
-  nextBtn.textContent = '\u203A';
-  nextBtn.setAttribute('aria-label', 'Next category');
-  nextBtn.addEventListener('click', () => showCard(mobileIndex + 1));
-
-  nav.appendChild(prevBtn);
-  nav.appendChild(dots);
-  nav.appendChild(nextBtn);
-  gridEl.appendChild(nav);
-
   // Cards container
   const cardsWrap = document.createElement('div');
   cardsWrap.className = 'f5-mobile-cards';
@@ -179,6 +145,34 @@ function renderMobile() {
 
   gridEl.appendChild(cardsWrap);
 
+  // Bottom navigation bar
+  const nav = document.createElement('div');
+  nav.className = 'f5-mobile-nav';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'f5-mobile-nav__btn';
+  prevBtn.id = 'mobile-prev';
+  prevBtn.innerHTML = '&larr; Prev';
+  prevBtn.setAttribute('aria-label', 'Previous category');
+  prevBtn.addEventListener('click', () => showCard(mobileIndex - 1));
+
+  const counter = document.createElement('div');
+  counter.className = 'f5-mobile-nav__counter';
+  counter.id = 'mobile-counter';
+  counter.textContent = '1 / 5';
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'f5-mobile-nav__btn';
+  nextBtn.id = 'mobile-next';
+  nextBtn.innerHTML = 'Next &rarr;';
+  nextBtn.setAttribute('aria-label', 'Next category');
+  nextBtn.addEventListener('click', () => showCard(mobileIndex + 1));
+
+  nav.appendChild(prevBtn);
+  nav.appendChild(counter);
+  nav.appendChild(nextBtn);
+  gridEl.appendChild(nav);
+
   // Swipe support
   let touchStartX = 0;
   cardsWrap.addEventListener('touchstart', (e) => {
@@ -192,6 +186,8 @@ function renderMobile() {
       else showCard(mobileIndex - 1);
     }
   }, { passive: true });
+
+  updateNavState();
 }
 
 function showCard(index) {
@@ -203,10 +199,18 @@ function showCard(index) {
     card.classList.toggle('active', i === index);
   });
 
-  const dots = gridEl.querySelectorAll('.f5-mobile-nav__dot');
-  dots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === index);
-  });
+  updateNavState();
+}
+
+function updateNavState() {
+  const counter = document.getElementById('mobile-counter');
+  const prevBtn = document.getElementById('mobile-prev');
+  const nextBtn = document.getElementById('mobile-next');
+  if (!counter) return;
+
+  counter.textContent = `${mobileIndex + 1} / ${ROWS}`;
+  prevBtn.disabled = mobileIndex === 0;
+  nextBtn.disabled = mobileIndex === ROWS - 1;
 }
 
 function handleMobileKeyNav(e, row, col) {

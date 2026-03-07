@@ -181,8 +181,10 @@ async function validate(answers, categories, letters) {
         `Validate. Respond with a JSON array ONLY, no other text:\n${JSON.stringify(payload)}`
       );
       apiResults = parseResponse(responseText);
-    } catch {
-      // API failed — return null to trigger self-scoring fallback
+    } catch (retryErr) {
+      // API failed — surface the error message
+      console.error('[F5 Validator] API failed:', retryErr.message);
+      alert('API error: ' + retryErr.message);
       return null;
     }
   }

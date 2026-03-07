@@ -2,6 +2,7 @@
 // State creation, category/letter selection, scoring
 
 import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS } from './categories.js';
+import * as storage from './storage.js';
 
 // Fisher-Yates shuffle (returns new array)
 function shuffle(arr) {
@@ -20,7 +21,19 @@ function shuffle(arr) {
  */
 function selectCategories(difficulty = 'standard') {
   const pool = CATEGORIES;
-  const shuffled = shuffle(pool);
+  const history = storage.getHistory();
+  const recentNames = new Set();
+  for (let i = 0; i < Math.min(3, history.length); i++) {
+    if (history[i].categories) {
+      history[i].categories.forEach(name => recentNames.add(name));
+    }
+  }
+
+  // Prefer categories not used in last 3 games
+  const fresh = pool.filter(c => !recentNames.has(c.name));
+  const stale = pool.filter(c => recentNames.has(c.name));
+  const shuffled = [...shuffle(fresh), ...shuffle(stale)];
+
   const picked = [];
   const usedTags = new Set();
 
@@ -47,11 +60,27 @@ function selectCategories(difficulty = 'standard') {
 }
 
 /**
- * Select 5 random letters from the appropriate pool.
+ * Select 5 random letters, avoiding letters from the last 2 games.
  */
 function selectLetters(mode = 'standard') {
   const pool = mode === 'expert' ? EXPERT_LETTERS : STANDARD_LETTERS;
-  return shuffle(pool).slice(0, 5);
+  const history = storage.getHistory();
+  const recentLetters = new Set();
+  for (let i = 0; i < Math.min(2, history.length); i++) {
+    if (history[i].letters) {
+      history[i].letters.forEach(l => recentLetters.add(l));
+    }
+  }
+
+  // Prefer letters not used recently
+  const fresh = pool.filter(l => !recentLetters.has(l));
+  const stale = pool.filter(l => recentLetters.has(l));
+
+  // Pick from fresh first, fill remainder from stale if needed
+  const shuffledFresh = shuffle(fresh);
+  const shuffledStale = shuffle(stale);
+  const combined = [...shuffledFresh, ...shuffledStale];
+  return combined.slice(0, 5);
 }
 
 /**

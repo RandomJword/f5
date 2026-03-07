@@ -122,7 +122,7 @@ function renderMobile() {
       input.type = 'text';
       input.className = 'f5-mobile-card__input';
       input.maxLength = 60;
-      input.placeholder = `${letter}...`;
+      input.placeholder = '';
       input.setAttribute('aria-label', `${cat.name} starting with ${letter}`);
       input.dataset.row = r;
       input.dataset.col = c;

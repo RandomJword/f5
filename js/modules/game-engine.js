@@ -19,10 +19,7 @@ function shuffle(arr) {
  * If we can't fill 5 unique tags, allow duplicates for remaining slots.
  */
 function selectCategories(difficulty = 'standard') {
-  const pool = difficulty === 'hard'
-    ? CATEGORIES
-    : CATEGORIES.filter(c => c.difficulty <= 2);
-
+  const pool = CATEGORIES;
   const shuffled = shuffle(pool);
   const picked = [];
   const usedTags = new Set();

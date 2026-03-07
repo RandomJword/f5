@@ -51,6 +51,7 @@ body {
   padding: 0 var(--f5-space-lg);
   border-bottom: var(--f5-border-width-thick) solid var(--f5-border-strong);
   max-width: var(--f5-max-width);
+  width: 100%;
   margin: 0 auto;
 }
 

@@ -15,7 +15,7 @@
   /* Colors — text */
   --f5-text: #1A1A1A;
   --f5-text-body: #4A4A4A;
-  --f5-text-muted: #8A8A7A;
+  --f5-text-muted: #706E60;
 
   /* Colors — accent */
   --f5-accent: #C8102E;
@@ -113,7 +113,7 @@ body.theme-retro {
 
   --f5-text: #3B2F2F;
   --f5-text-body: #5C4A3A;
-  --f5-text-muted: #8B7D6B;
+  --f5-text-muted: #6E5F4E;
 
   --f5-accent: #C41E3A;
   --f5-accent-hover: #A0182E;
@@ -167,13 +167,13 @@ body.theme-minimal {
 
   --f5-text: #1A1A1A;
   --f5-text-body: #4A4A4A;
-  --f5-text-muted: #999999;
+  --f5-text-muted: #717171;
 
-  --f5-accent: #FF4400;
-  --f5-accent-hover: #CC3700;
+  --f5-accent: #C43600;
+  --f5-accent-hover: #A02D00;
 
-  --f5-valid: #1A8C1A;
-  --f5-invalid: #FF4400;
+  --f5-valid: #157A15;
+  --f5-invalid: #C43600;
   --f5-warning: #E6A800;
 
   --f5-font-heading: 'Inter', -apple-system, sans-serif;
@@ -219,13 +219,13 @@ body.theme-library {
 
   --f5-text: #E8DCC8;
   --f5-text-body: #C8B898;
-  --f5-text-muted: #8B7355;
+  --f5-text-muted: #A8956E;
 
   --f5-accent: #B8860B;
   --f5-accent-hover: #9A7009;
 
-  --f5-valid: #2D5F2D;
-  --f5-invalid: #A03030;
+  --f5-valid: #5A9A5A;
+  --f5-invalid: #D05050;
   --f5-warning: #B8860B;
 
   --f5-font-heading: 'EB Garamond', Georgia, serif;
@@ -271,14 +271,14 @@ body.theme-botanical {
 
   --f5-text: #2C3319;
   --f5-text-body: #4A5438;
-  --f5-text-muted: #8B9B78;
+  --f5-text-muted: #6B7A5A;
 
-  --f5-accent: #D4956A;
-  --f5-accent-hover: #B87D55;
+  --f5-accent: #A0714A;
+  --f5-accent-hover: #8A6040;
 
   --f5-valid: #2D5016;
   --f5-invalid: #A03030;
-  --f5-warning: #D4956A;
+  --f5-warning: #A0714A;
 
   --f5-font-heading: 'Cormorant Garamond', Georgia, serif;
   --f5-font-body: 'Lato', 'Helvetica Neue', sans-serif;

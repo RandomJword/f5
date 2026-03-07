@@ -40,6 +40,14 @@
 - [x] **Themes reduced** — 8 → 5 (removed Pop Art, Brutalist Digital, one other)
 - [x] **GitHub Pages deploy** — https://randomjword.github.io/f5/
 - [x] **View Stats on results screen**
+- [x] **Dev feedback: score math display** — changed from fraction (2/5=4) to multiplier (2×2=4) showing n² mechanic
+- [x] **Dev feedback: mobile results polish** — larger score, better spacing/hierarchy, full-width buttons
+- [x] **Dev feedback: stats hero card** — renamed "Best" to "High Score" as full-width hero, removed "Games" count
+- [x] **Dev feedback: settings cleanup** — removed strictness dropdown, removed auth card, hide kebab menu on settings screen
+- [x] **Review Last Game** — saves last completed game to localStorage, "Review Last Game" button in stats Recent Games section
+- [x] **Mobile autofill fix** — autocomplete="f5-answer" on all inputs prevents browser address suggestions
+- [x] **Category-context spelling correction** — prompt now uses category as primary clue for misspellings (Kawaii → Kauai under Islands)
+- [x] **Strict mode removed** — deleted strict prompt, removed getStrictness/setStrictness, always lenient
 
 ## Backlog
 - [ ] Self-scoring fallback UI (when API fails)

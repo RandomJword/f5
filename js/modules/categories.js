@@ -85,7 +85,6 @@ const CATEGORIES = [
   { name: 'Ancient Civilizations', tag: 'history', difficulty: 2 },
   { name: 'World Leaders', tag: 'history', difficulty: 2 },
   { name: 'Explorers', tag: 'history', difficulty: 2 },
-  { name: 'Famous Battles', tag: 'history', difficulty: 3 },
   { name: 'Royals & Monarchs', tag: 'history', difficulty: 2 },
 
   // Science

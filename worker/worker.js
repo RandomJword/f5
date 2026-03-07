@@ -51,10 +51,14 @@ export default {
       return jsonError('Origin not allowed', 403);
     }
 
+    // All error responses from here on must include CORS headers
+    // so the browser can read the error (otherwise Safari shows "Load failed")
+    const cors = corsHeaders(origin);
+
     // Validate invite code
     const inviteCode = request.headers.get('x-invite-code');
     if (!inviteCode || inviteCode !== env.INVITE_CODE) {
-      return jsonError('Invalid invite code', 401);
+      return jsonError('Invalid invite code', 401, cors);
     }
 
     // Rate limit by IP
@@ -63,6 +67,7 @@ export default {
     if (!limitResult.ok) {
       return jsonError(limitResult.message, 429, {
         'Retry-After': String(limitResult.retryAfter),
+        ...cors,
       });
     }
 
@@ -78,11 +83,11 @@ export default {
     try {
       body = await request.json();
     } catch {
-      return jsonError('Invalid JSON body', 400);
+      return jsonError('Invalid JSON body', 400, cors);
     }
 
     if (!body.model || !ALLOWED_MODELS.includes(body.model)) {
-      return jsonError(`Model not allowed. Use: ${ALLOWED_MODELS.join(', ')}`, 400);
+      return jsonError(`Model not allowed. Use: ${ALLOWED_MODELS.join(', ')}`, 400, cors);
     }
 
     if (body.max_tokens > MAX_TOKENS_CAP) {
@@ -109,10 +114,7 @@ export default {
       });
     } catch (fetchErr) {
       // Anthropic unreachable or Worker timeout — return error WITH CORS headers
-      return new Response(JSON.stringify({ error: { message: `Upstream API error: ${fetchErr.message}` } }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
-      });
+      return jsonError(`Upstream API error: ${fetchErr.message}`, 502, cors);
     }
 
     const responseBody = await anthropicRes.text();

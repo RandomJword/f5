@@ -44,6 +44,9 @@ body {
    HEADER
    ============================================================ */
 .f5-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -53,6 +56,7 @@ body {
   max-width: var(--f5-max-width);
   width: 100%;
   margin: 0 auto;
+  background: var(--f5-bg);
 }
 
 .f5-header__title {
@@ -60,6 +64,10 @@ body {
   font-weight: var(--f5-weight-black);
   font-size: var(--f5-text-xl);
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .f5-header__actions {

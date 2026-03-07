@@ -97,6 +97,7 @@ Rules:
    - "Scientists" includes anyone who made significant contributions to any field of science.
    - "Team Sports" includes ANY sport played by teams, even if also categorizable as something else. Polo, rowing, relay races, doubles tennis — all valid.
    - CRITICAL: Do NOT reject because the answer is "primarily known as" something else. People and things belong to MULTIPLE categories. If the answer fits the category AT ALL, accept it.
+   - However, the answer must actually BE the type of thing the category describes. A province is not a country. A lake is not an ocean. A city is not a state. Broad interpretation applies to borderline membership within a category, NOT to accepting answers that are fundamentally the wrong type of thing.
    - Apply this broad interpretation to ALL categories.
 2. The letter check depends on the category type:
    - People (authors, scientists, athletes, etc.): the SURNAME determines the letter. Players may write first name, full name, or surname only. When a single name is given, ALWAYS check if it could be a valid surname — do NOT assume it is a first name. Example: "Tennessee Williams" is valid for W because surname "Williams" starts with W. "Einstein" and "Albert Einstein" are both valid for E. "Willis" is valid for W if there is a known person with surname Willis in the category (e.g., Kevin Willis in basketball).
@@ -330,6 +331,7 @@ Rules for judging:
 - Must be real and verifiable (fictional OK if category is about fiction).
 - If the answer includes a parenthetical note like "(gravity)" or "(Soviet leader)", IGNORE it completely. Do NOT fact-check it or use it for/against the answer. It is just a disambiguation hint.
 - Do NOT reject because the person/thing is "primarily known as" something else. If it fits the category AT ALL, accept it.
+- However, the answer must actually BE the type of thing the category describes. A province is not a country. A lake is not an ocean. A city is not a state. Broad interpretation applies to borderline membership, NOT to fundamentally wrong types.
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
 - Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as context — if the answer doesn't fit as written but a close spelling variant does fit the category, accept it (e.g., "Kawaii" under Islands = "Kauai").
 - Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.

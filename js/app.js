@@ -162,10 +162,14 @@ function bindGlobalEvents() {
     });
   });
 
-  // Submit early
+  // Submit / I'm Done
   const submitBtn = document.getElementById('btn-submit-early');
   if (submitBtn) {
     submitBtn.addEventListener('click', () => {
+      if (activeTimer && activeTimer.isRunning()) {
+        // Timer still going — confirm early submission
+        if (!confirm('Submit your answers early?')) return;
+      }
       if (activeTimer) activeTimer.stop();
       onTimeUp();
     });
@@ -230,7 +234,7 @@ function startNewGame() {
       }
     }
   }, () => {
-    // Timer expired
+    // Timer expired — auto-submit
     onTimeUp();
   });
 

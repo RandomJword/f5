@@ -58,6 +58,9 @@ function showScreen(screenId) {
   });
   currentScreen = screenId;
 
+  // Allow pull-to-refresh on home screen only
+  document.documentElement.style.overscrollBehaviorY = screenId === 'home' ? 'auto' : 'none';
+
   // Hide kebab menu on settings screen
   const headerSettings = document.getElementById('btn-header-settings');
   if (headerSettings) {

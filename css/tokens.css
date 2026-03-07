@@ -32,14 +32,14 @@
   --f5-font-mono: 'Courier Prime', 'Courier New', monospace;
   --f5-font-ui: 'Source Serif 4', 'Georgia', serif;
 
-  /* Typography — sizes */
-  --f5-text-xs: 0.75rem;
-  --f5-text-sm: 0.875rem;
-  --f5-text-base: 1rem;
-  --f5-text-lg: 1.125rem;
-  --f5-text-xl: 1.5rem;
-  --f5-text-2xl: 2rem;
-  --f5-text-3xl: 3rem;
+  /* Typography — fluid sizes (320px → 1200px) */
+  --f5-text-xs: clamp(0.6875rem, 0.66rem + 0.14vw, 0.8125rem);
+  --f5-text-sm: clamp(0.8125rem, 0.775rem + 0.34vw, 1rem);
+  --f5-text-base: clamp(0.875rem, 0.739rem + 0.68vw, 1.25rem);
+  --f5-text-lg: clamp(1rem, 0.818rem + 0.91vw, 1.5rem);
+  --f5-text-xl: clamp(1.25rem, 0.977rem + 1.36vw, 2rem);
+  --f5-text-2xl: clamp(1.5rem, 0.955rem + 2.73vw, 3rem);
+  --f5-text-3xl: clamp(2rem, 1.091rem + 4.55vw, 4.5rem);
 
   /* Typography — weights */
   --f5-weight-normal: 400;
@@ -47,14 +47,14 @@
   --f5-weight-bold: 700;
   --f5-weight-black: 900;
 
-  /* Spacing */
-  --f5-space-xs: 0.25rem;
-  --f5-space-sm: 0.5rem;
-  --f5-space-md: 1rem;
-  --f5-space-lg: 1.5rem;
-  --f5-space-xl: 2rem;
-  --f5-space-2xl: 3rem;
-  --f5-space-3xl: 4rem;
+  /* Spacing — fluid (320px → 1200px) */
+  --f5-space-xs: clamp(0.1875rem, 0.153rem + 0.17vw, 0.375rem);
+  --f5-space-sm: clamp(0.375rem, 0.239rem + 0.68vw, 0.75rem);
+  --f5-space-md: clamp(0.75rem, 0.477rem + 1.36vw, 1.5rem);
+  --f5-space-lg: clamp(1rem, 0.545rem + 2.27vw, 2.25rem);
+  --f5-space-xl: clamp(1.25rem, 0.614rem + 3.18vw, 3rem);
+  --f5-space-2xl: clamp(1.5rem, 0.591rem + 4.55vw, 4rem);
+  --f5-space-3xl: clamp(2rem, 0.545rem + 7.27vw, 6rem);
 
   /* Borders */
   --f5-radius: 0px;
@@ -96,9 +96,9 @@
   --f5-btn-hover-bg: #333;
   --f5-btn-radius: 0px;
 
-  /* Layout */
-  --f5-max-width: 720px;
-  --f5-header-height: 3.5rem;
+  /* Layout — fluid */
+  --f5-max-width: clamp(40rem, 36.364rem + 18.18vw, 52.5rem);
+  --f5-header-height: clamp(3rem, 2.636rem + 1.82vw, 4rem);
 }
 
 

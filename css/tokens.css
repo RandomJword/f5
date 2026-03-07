@@ -250,8 +250,11 @@ body.theme-library {
   --f5-grid-header-bg: #1E1209;
   --f5-grid-header-text: #E8DCC8;
 
+  --f5-timer-color: #E8DCC8;
   --f5-timer-bar-fill: #B8860B;
-  --f5-timer-warning: #A03030;
+  --f5-timer-bar-bg: #5C3A21;
+  --f5-timer-warning: #D05050;
+  --f5-timer-critical: #D05050;
 
   --f5-btn-bg: #B8860B;
   --f5-btn-text: #1E1209;

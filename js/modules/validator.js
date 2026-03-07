@@ -55,10 +55,11 @@ Rules:
    - Places (cities, countries, states, etc.): use the first word. Example: "New York" is valid for N.
    - Everything else: use the first letter of the answer.
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
-4. Proper names and full words required. Abbreviations like "JFK" or "USA" are not accepted — write "Kennedy" or "United States."
-5. Spelling must be correct or very close (one letter off is OK if clearly recognizable).
-6. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
-7. When in doubt about whether someone/something is real, give the benefit of the doubt if the answer is plausible and specific.
+4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
+5. Proper names and full words required. Abbreviations like "JFK" or "USA" are not accepted — write "Kennedy" or "United States."
+6. Spelling must be correct or very close (one letter off is OK if clearly recognizable).
+7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
+8. When in doubt about whether someone/something is real, give the benefit of the doubt if the answer is plausible and specific.
 
 Respond with a JSON array only. No markdown fences. No extra text.
 Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
@@ -79,11 +80,12 @@ Rules:
    - Places (cities, countries, states, etc.): use the first word. Example: "New York" is valid for N.
    - Everything else: use the first letter of the answer.
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
-4. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
-5. Minor spelling errors are accepted if the intended answer is clearly recognizable.
-6. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
-7. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
-8. When in doubt, accept it. The player is playing solo for fun.
+4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
+5. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
+6. Minor spelling errors are accepted if the intended answer is clearly recognizable.
+7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
+8. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
+9. When in doubt, accept it. The player is playing solo for fun.
 
 Respond with a JSON array only. No markdown fences. No extra text.
 Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
@@ -166,7 +168,8 @@ async function validate(answers, categories, letters) {
   }
 
   // Map results and collect items needing Wikipedia verification
-  const toVerify = [];
+  const toVerify = [];   // valid answers — Wikipedia confirms existence
+  const toRescue = [];   // rejected answers — Wikipedia may override Claude
 
   for (const item of toSubmit) {
     const apiResult = resultMap.get(item.id);
@@ -176,23 +179,37 @@ async function validate(answers, categories, letters) {
 
     results[item.row][item.col] = result;
 
-    // Queue Wikipedia check for valid non-fiction answers
-    if (result.valid && !FICTION_CATEGORIES.has(item.category)) {
+    if (FICTION_CATEGORIES.has(item.category)) continue;
+
+    if (result.valid) {
+      // Verify valid answers actually exist
       toVerify.push({ item, result, query: result.canonical || item.answer });
+    } else {
+      // Rescue rejected answers if Wikipedia confirms they exist
+      toRescue.push({ item, result, query: item.answer });
     }
   }
 
-  // Run Wikipedia checks in parallel
-  if (toVerify.length > 0) {
+  // Run all Wikipedia checks in parallel
+  const allChecks = [...toVerify, ...toRescue];
+  if (allChecks.length > 0) {
     const checks = await Promise.all(
-      toVerify.map(v => wikiCheck(v.query))
+      allChecks.map(v => wikiCheck(v.query))
     );
 
-    for (let i = 0; i < toVerify.length; i++) {
+    for (let i = 0; i < allChecks.length; i++) {
       const found = checks[i];
-      if (found === false) {
+      const v = allChecks[i];
+      const isRescue = i >= toVerify.length;
+
+      if (isRescue && found === true) {
+        // Wikipedia found it — Claude was wrong (likely knowledge cutoff)
+        // Override to valid: it exists, letter/category check was based on bad premise
+        v.result.valid = true;
+        v.result.explanation = `Verified via Wikipedia. Claude did not recognize this answer (likely released after its knowledge cutoff).`;
+        results[v.item.row][v.item.col] = v.result;
+      } else if (!isRescue && found === false) {
         // Wikipedia couldn't find it — override to invalid
-        const v = toVerify[i];
         v.result.valid = false;
         v.result.explanation = `Could not verify "${v.query}" exists. If this is wrong, appeal.`;
         results[v.item.row][v.item.col] = v.result;

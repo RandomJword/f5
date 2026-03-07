@@ -265,6 +265,9 @@ async function onTimeUp() {
   activeGame.validationResults = results;
   activeGame.score = calculateScore(results);
 
+  // Save for review from stats screen
+  storage.setLastGame(activeGame);
+
   // Save to history
   storage.addToHistory({
     id: activeGame.id,
@@ -621,8 +624,10 @@ function renderStats() {
   }
 
   // Recent games list
+  const lastGame = storage.getLastGame();
   html += `<div style="margin-top: var(--f5-space-xl);">
     <div class="f5-stat-label" style="margin-bottom: var(--f5-space-md);">Recent Games</div>
+    ${lastGame ? `<button class="f5-btn f5-btn--outline" id="btn-review-last" style="width: 100%; margin-bottom: var(--f5-space-md);">Review Last Game</button>` : ''}
     ${stats.recent.slice().reverse().map(g => {
       const date = new Date(g.date);
       const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -641,6 +646,15 @@ function renderStats() {
   </div>`;
 
   container.innerHTML = html;
+
+  // Wire up review button
+  const reviewBtn = document.getElementById('btn-review-last');
+  if (reviewBtn) {
+    reviewBtn.addEventListener('click', () => {
+      const game = storage.getLastGame();
+      if (game) showResults(game, false);
+    });
+  }
 }
 
 // Boot

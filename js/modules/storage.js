@@ -126,6 +126,15 @@ function addRecentLetters(letters) {
   set('recent_letters', recent);
 }
 
+// Last completed game (for review)
+function getLastGame() {
+  return get('last_game');
+}
+
+function setLastGame(game) {
+  set('last_game', game);
+}
+
 // Game history
 function getHistory() {
   return get('history', []);
@@ -190,6 +199,8 @@ export {
   setUsedCategoryCycle,
   getRecentLetters,
   addRecentLetters,
+  getLastGame,
+  setLastGame,
   getHistory,
   addToHistory,
   clearCache,

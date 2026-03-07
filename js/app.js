@@ -1,14 +1,14 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js';
-import * as themeManager from './modules/theme-manager.js';
-import * as grid from './modules/grid.js';
-import { createTimer, formatTime } from './modules/timer.js';
-import { newGame, calculateScore } from './modules/game-engine.js';
-import { validate, appeal } from './modules/validator.js';
-import { compute as computeStats } from './modules/stats.js';
-import { hasProxy } from './modules/claude-api.js';
+import * as storage from './modules/storage.js?v=20260307l';
+import * as themeManager from './modules/theme-manager.js?v=20260307l';
+import * as grid from './modules/grid.js?v=20260307l';
+import { createTimer, formatTime } from './modules/timer.js?v=20260307l';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260307l';
+import { validate, appeal } from './modules/validator.js?v=20260307l';
+import { compute as computeStats } from './modules/stats.js?v=20260307l';
+import { hasProxy } from './modules/claude-api.js?v=20260307l';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];

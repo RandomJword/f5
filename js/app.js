@@ -258,6 +258,7 @@ async function onTimeUp() {
   if (!results) {
     // API failed — TODO: self-scoring fallback in future
     activeGame.status = 'abandoned';
+    alert('Validation failed — could not reach the AI judge. Returning to menu.');
     showScreen('menu');
     return;
   }
@@ -280,7 +281,13 @@ async function onTimeUp() {
     date: Date.now(),
   });
 
-  showResults(activeGame);
+  try {
+    showResults(activeGame);
+  } catch (err) {
+    console.error('[F5] showResults error:', err);
+    alert('Error displaying results: ' + err.message);
+    showScreen('menu');
+  }
 }
 
 function showResults(game, animate = true) {

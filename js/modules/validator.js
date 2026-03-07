@@ -103,6 +103,12 @@ Rules:
    - People (authors, scientists, athletes, etc.): the SURNAME determines the letter. Players may write first name, full name, or surname only. When a single name is given, ALWAYS check if it could be a valid surname — do NOT assume it is a first name. Example: "Tennessee Williams" is valid for W because surname "Williams" starts with W. "Einstein" and "Albert Einstein" are both valid for E. "Willis" is valid for W if there is a known person with surname Willis in the category (e.g., Kevin Willis in basketball).
    - Titles (movies, books, songs, etc.): ignore leading articles "The", "A", "An". Example: "The Godfather" is valid for G.
    - Geographic features (lakes, rivers, mountains, bays, capes, gulfs, etc.): IGNORE generic prefixes like "Lake", "River", "Mount", "Cape", "Bay", "Gulf", "Sea", "Ocean", "Isle". Use the proper name. Example: "Lake Erie" is valid for E (the lake's name is Erie). "Mount Everest" is valid for E. "River Thames" is valid for T.
+   - Sports teams: the letter is determined by the team's DISTINCTIVE NAME, not the city. The test: would that word work on its own as an answer to "name a sports team"?
+     (a) Real mascot/nickname → use it. "Chicago Bears" = B, "Toronto Maple Leafs" = M, "New York Yankees" = Y, "Green Bay Packers" = P. (Bears, Maple Leafs, Yankees, Packers all work as standalone team names.)
+     (b) Generic suffix (City, United, Town, Rovers, Wanderers) → use the city/place name. "Manchester City" = M, "Manchester United" = M, "Newcastle United" = N. (City and United don't work as standalone team names.)
+     (c) Title/corporate prefixes (FC, AC, Real, RB, Red Bull, Bayer, Club, Eintracht) → strip them. "Real Madrid" = M, "FC Barcelona" = B, "AC Milan" = M, "RB Leipzig" = L, "Red Bull Salzburg" = S. (But "Bayern Munich" = B — Bayern IS a distinctive identity.)
+     (d) Shared prefixes used by many clubs (Dynamo, Maccabi, CSKA) → use the city. "Dynamo Kyiv" = K, "Maccabi Haifa" = H, "CSKA Sofia" = S. (The prefix alone doesn't identify the team.)
+     When rejecting for letter mismatch, ALWAYS briefly explain the rule so the player learns. Format: "[Team] matches [correct letter], not [attempted letter]. [One sentence explaining why.]" Examples: "Toronto Maple Leafs matches M, not T. For sports teams, use the mascot (Maple Leafs = M), not the city." / "Manchester United matches M, not U. Generic suffixes like United don't count — use the city name." / "Real Madrid matches M, not R. Prefixes like Real, FC, and AC are ignored."
    - Places (cities, countries, states, etc.): use the first word. Example: "New York" is valid for N.
    - Everything else: use the first letter of the answer.
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
@@ -332,6 +338,7 @@ Player's answer: "${answer}"
 Rules for judging:
 - For people categories: the SURNAME determines the letter match. The player may write their full name, first name, or surname. Example: "Tennessee Williams" is valid for W (surname Williams). "Albert Einstein" is valid for E (surname Einstein).
 - For titles: ignore leading "The", "A", "An". "The Godfather" = G.
+- For sports teams: the letter is the team's DISTINCTIVE NAME, not the city. The test: would that word work alone as a team name? Real mascot (Bears, Maple Leafs, Yankees) → use it: "Chicago Bears" = B, "Toronto Maple Leafs" = M. Generic suffix (City, United) → use the city: "Manchester City" = M, "Manchester United" = M. Strip title/corporate prefixes (FC, AC, Real, RB, Red Bull): "Real Madrid" = M, "FC Barcelona" = B. But keep distinctive identities: "Bayern Munich" = B. Shared prefixes (Dynamo, Maccabi, CSKA) → use the city: "Dynamo Kyiv" = K, "Maccabi Haifa" = H. When rejecting, briefly explain the rule so the player learns.
 - For places: first word counts. "New York" = N.
 - For everything else: first letter of the answer.
 - Must be real and verifiable (fictional OK if category is about fiction).

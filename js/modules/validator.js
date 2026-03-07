@@ -57,7 +57,7 @@ Rules:
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
 4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
 5. Proper names and full words required. Abbreviations like "JFK" or "USA" are not accepted — write "Kennedy" or "United States."
-6. Spelling must be correct or very close (one letter off is OK if clearly recognizable).
+6. Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi", "Tchaikovsky" for "Tchaikovskiy" — these are all valid because the intent is clear. The test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. When in doubt about whether someone/something is real, give the benefit of the doubt if the answer is plausible and specific.
 
@@ -82,7 +82,7 @@ Rules:
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
 4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
 5. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
-6. Minor spelling errors are accepted if the intended answer is clearly recognizable.
+6. Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi", "Tchaikovsky" for "Tchaikovskiy" — these are all valid because the intent is clear. The test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
 9. When in doubt, accept it. The player is playing solo for fun.
@@ -186,7 +186,8 @@ async function validate(answers, categories, letters) {
       toVerify.push({ item, result, query: result.canonical || item.answer });
     } else {
       // Rescue rejected answers if Wikipedia confirms they exist
-      toRescue.push({ item, result, query: item.answer });
+      // Try canonical name first (Claude may have identified correct spelling), fall back to player's answer
+      toRescue.push({ item, result, query: result.canonical || item.answer, fallbackQuery: result.canonical ? item.answer : null });
     }
   }
 
@@ -203,11 +204,18 @@ async function validate(answers, categories, letters) {
       const isRescue = i >= toVerify.length;
 
       if (isRescue && found === true) {
-        // Wikipedia found it — Claude was wrong (likely knowledge cutoff)
-        // Override to valid: it exists, letter/category check was based on bad premise
+        // Wikipedia found it — Claude was wrong
         v.result.valid = true;
-        v.result.explanation = `Verified via Wikipedia. Claude did not recognize this answer (likely released after its knowledge cutoff).`;
+        v.result.explanation = `Verified via Wikipedia.`;
         results[v.item.row][v.item.col] = v.result;
+      } else if (isRescue && found !== true && v.fallbackQuery) {
+        // Primary query failed, try fallback (player's original answer)
+        const fallbackFound = await wikiCheck(v.fallbackQuery);
+        if (fallbackFound === true) {
+          v.result.valid = true;
+          v.result.explanation = `Verified via Wikipedia.`;
+          results[v.item.row][v.item.col] = v.result;
+        }
       } else if (!isRescue && found === false) {
         // Wikipedia couldn't find it — override to invalid
         v.result.valid = false;
@@ -259,6 +267,8 @@ Rules for judging:
 - If the answer includes a parenthetical note like "(gravity)" or "(Soviet leader)", IGNORE it completely. Do NOT fact-check it or use it for/against the answer. It is just a disambiguation hint.
 - Do NOT reject because the person/thing is "primarily known as" something else. If it fits the category AT ALL, accept it.
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
+- Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
+- Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.
 ${strictness === 'lenient'
   ? '- Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.'
   : '- Be fair but precise. Accept answers that genuinely fit the category and letter, even if unusual or obscure.'}

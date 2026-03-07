@@ -22,9 +22,9 @@ function init() {
   themeManager.init();
 
   // One-time cache clear for prompt v2 upgrade
-  if (!storage.get('cache_v7')) {
+  if (!storage.get('cache_v8')) {
     storage.clearCache();
-    storage.set('cache_v7', true);
+    storage.set('cache_v8', true);
   }
 
   // Check for crash recovery

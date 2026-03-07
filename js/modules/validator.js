@@ -112,9 +112,11 @@ Rules:
    CRITICAL: Use the CATEGORY as context for spelling interpretation. If an answer doesn't fit the category as written, check if a close spelling variant DOES fit. The category is the strongest clue for intent. Example: "Kawaii" under Islands is clearly "Kauai" (Hawaiian island) — accept it. "Koalla" under Animals is clearly "Koala" — accept it. Do NOT match the answer to an unrelated meaning when a category-relevant correction exists.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
-9. For creative/subjective categories (e.g., "Things That Are Round", "Excuses to Skip Work", "Exclamations", "Things in a Junk Drawer") and slang categories (e.g., "GenX Slang", "Baby Boomer Slang"): be VERY loose. If the answer is a reasonable, defensible response, accept it. These are meant to be fun and creative.
-10. For decade-specific categories (e.g., "80s Movies", "70s Songs"): accept the answer if it is plausibly from that era. Do not reject over borderline release dates.
-11. When in doubt, accept it. The player is playing solo for fun.
+9. For creative/subjective categories (e.g., "Things That Are Round", "Things That Are Blue", "Excuses to Skip Work", "Things at a Hardware Store", "Things at a Grocery Store", "Things in a Junk Drawer"): be EXTREMELY loose. Almost any answer that a person could reasonably argue fits should be accepted. These categories are meant to be fun — there are no wrong answers if the connection is defensible at all. "Sadness" for "Things That Are Blue"? Accept it (blue = sad). "Air" for "Things That Are White"? Accept it. Be playful and generous.
+10. For slang categories (e.g., "GenX Slang", "Baby Boomer Slang", "Millennial Slang", "Gen Z Slang"): accept ANY word or phrase that was plausibly used as slang by that generation. Slang is informal and regional — do NOT reject because you don't recognize it or it seems too obscure. If it sounds like it could be slang, accept it. The player lived through that era and probably knows better than you.
+11. For terminology categories (e.g., "Architecture Terminology", "Design Terminology", "Art Terminology", "Music Terminology"): accept technical terms, jargon, and common shorthand used by practitioners. Be generous with borderline terms.
+12. For decade-specific categories (e.g., "80s Movies", "70s Songs"): accept the answer if it is plausibly from that era. Do not reject over borderline release dates.
+13. When in doubt, accept it. The player is playing solo for fun.
 
 Respond with a JSON array only. No markdown fences. No extra text.
 Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
@@ -340,6 +342,10 @@ Rules for judging:
 - Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as context — if the answer doesn't fit as written but a close spelling variant does fit the category, accept it (e.g., "Kawaii" under Islands = "Kauai").
 - Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.
 - Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.
+- For creative/subjective categories ("Things That Are ___", "Things at a ___", "Excuses to ___", etc.): be EXTREMELY loose. Almost any defensible answer should be accepted. These are meant to be fun.
+- For slang categories ("GenX Slang", "Baby Boomer Slang", etc.): accept ANY word/phrase that was plausibly used as slang by that generation. The player lived through it and probably knows better than you.
+- For terminology categories ("Architecture Terminology", "Design Terminology", etc.): accept technical terms, jargon, and common shorthand.
+- For decade-specific categories ("80s Movies", "70s Songs", etc.): accept if plausibly from that era. Don't reject over borderline dates.
 
 The first judge may have been wrong. Consider carefully whether this answer legitimately belongs to the category and matches the required letter. Players sometimes have creative, obscure, but perfectly valid answers.
 

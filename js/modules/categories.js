@@ -1,5 +1,5 @@
 // F5 Categories — curated pool with tags and difficulty
-// 297 categories across 10 tags. Tags prevent two from the same domain in one game.
+// 284 categories across 10 tags. Tags prevent two from the same domain in one game.
 // Difficulty: 1 = easy, 2 = medium, 3 = hard
 
 const CATEGORIES = [
@@ -10,24 +10,17 @@ const CATEGORIES = [
   { name: 'Trees', tag: 'nature', difficulty: 2 },
   { name: 'Dog Breeds', tag: 'nature', difficulty: 2 },
   { name: 'Fish & Sea Life', tag: 'nature', difficulty: 2 },
-  { name: 'Cat Breeds', tag: 'nature', difficulty: 2 },
   { name: 'Insects', tag: 'nature', difficulty: 2 },
   { name: 'Reptiles & Amphibians', tag: 'nature', difficulty: 3 },
   { name: 'Mammals', tag: 'nature', difficulty: 1 },
-  { name: 'Butterflies & Moths', tag: 'nature', difficulty: 3 },
   { name: 'Mushrooms & Fungi', tag: 'nature', difficulty: 3 },
-  { name: 'Whales & Dolphins', tag: 'nature', difficulty: 2 },
   { name: 'Sharks', tag: 'nature', difficulty: 3 },
   { name: 'Primates', tag: 'nature', difficulty: 3 },
-  { name: 'Endangered Species', tag: 'nature', difficulty: 3 },
   { name: 'Freshwater Fish', tag: 'nature', difficulty: 3 },
   { name: 'Farm Animals', tag: 'nature', difficulty: 1 },
   { name: 'Nocturnal Animals', tag: 'nature', difficulty: 3 },
   { name: 'Tropical Birds', tag: 'nature', difficulty: 3 },
-  { name: 'Wildflowers', tag: 'nature', difficulty: 3 },
   { name: 'Berries', tag: 'nature', difficulty: 2 },
-  { name: 'Succulents & Cacti', tag: 'nature', difficulty: 3 },
-  { name: 'Seashells', tag: 'nature', difficulty: 3 },
   { name: 'Herbs (Botanical)', tag: 'nature', difficulty: 2 },
   { name: 'Snakes', tag: 'nature', difficulty: 2 },
 
@@ -55,13 +48,11 @@ const CATEGORIES = [
   { name: 'Tropical Fruits', tag: 'food', difficulty: 2 },
   { name: 'Ice Cream Flavors', tag: 'food', difficulty: 1 },
   { name: 'Fast Food Chains', tag: 'food', difficulty: 1 },
-  { name: 'Sushi Types', tag: 'food', difficulty: 3 },
   { name: 'Pizza Toppings', tag: 'food', difficulty: 1 },
   { name: 'Sandwiches', tag: 'food', difficulty: 2 },
   { name: 'Street Foods', tag: 'food', difficulty: 2 },
   { name: 'Salads', tag: 'food', difficulty: 2 },
   { name: 'Asian Noodle Dishes', tag: 'food', difficulty: 3 },
-  { name: 'BBQ & Grilled Foods', tag: 'food', difficulty: 2 },
 
   // Geography
   { name: 'Countries', tag: 'geography', difficulty: 1 },
@@ -90,6 +81,9 @@ const CATEGORIES = [
   { name: 'Ski Resorts', tag: 'geography', difficulty: 2 },
   { name: 'Neighborhoods & Districts', tag: 'geography', difficulty: 3 },
   { name: 'Airports', tag: 'geography', difficulty: 2 },
+  { name: 'Colleges & Universities', tag: 'geography', difficulty: 2 },
+  { name: 'Famous Streets', tag: 'geography', difficulty: 2 },
+  { name: 'Famous Buildings', tag: 'geography', difficulty: 2 },
 
   // Entertainment
   { name: 'Movies', tag: 'entertainment', difficulty: 1 },
@@ -160,12 +154,14 @@ const CATEGORIES = [
   { name: 'Ballets', tag: 'arts', difficulty: 3 },
   { name: 'Museums', tag: 'arts', difficulty: 2 },
   { name: 'Fairy Tales & Fables', tag: 'arts', difficulty: 1 },
-  { name: 'Book Series', tag: 'arts', difficulty: 1 },
   { name: 'Fantasy Novels', tag: 'arts', difficulty: 2 },
   { name: 'Science Fiction Novels', tag: 'arts', difficulty: 2 },
-  { name: 'Memoirs & Autobiographies', tag: 'arts', difficulty: 3 },
   { name: 'Famous Paintings', tag: 'arts', difficulty: 2 },
   { name: 'Poetry Collections', tag: 'arts', difficulty: 3 },
+  { name: 'Architecture Terminology', tag: 'arts', difficulty: 3 },
+  { name: 'Design Terminology', tag: 'arts', difficulty: 3 },
+  { name: 'Art Terminology', tag: 'arts', difficulty: 3 },
+  { name: 'Music Terminology', tag: 'arts', difficulty: 3 },
 
   // History
   { name: 'U.S. Presidents', tag: 'history', difficulty: 2 },
@@ -173,19 +169,11 @@ const CATEGORIES = [
   { name: 'Mythological Figures', tag: 'history', difficulty: 2 },
   { name: 'Ancient Civilizations', tag: 'history', difficulty: 2 },
   { name: 'World Leaders', tag: 'history', difficulty: 2 },
-  { name: 'Explorers', tag: 'history', difficulty: 2 },
   { name: 'Royals & Monarchs', tag: 'history', difficulty: 2 },
   { name: 'Wars & Conflicts', tag: 'history', difficulty: 2 },
-  { name: 'Empires', tag: 'history', difficulty: 2 },
-  { name: 'Dynasties', tag: 'history', difficulty: 3 },
   { name: 'Civil Rights Leaders', tag: 'history', difficulty: 2 },
-  { name: 'Founding Fathers', tag: 'history', difficulty: 2 },
-  { name: 'Pirates', tag: 'history', difficulty: 3 },
-  { name: 'Historical Documents', tag: 'history', difficulty: 3 },
   { name: 'Women in History', tag: 'history', difficulty: 2 },
   { name: 'Ancient Greek Figures', tag: 'history', difficulty: 3 },
-  { name: 'Pharaohs', tag: 'history', difficulty: 3 },
-  { name: 'Famous Speeches', tag: 'history', difficulty: 3 },
 
   // Science
   { name: 'Scientists', tag: 'science', difficulty: 2 },
@@ -199,21 +187,13 @@ const CATEGORIES = [
   { name: 'Branches of Science', tag: 'science', difficulty: 2 },
   { name: 'Medical Specialties', tag: 'science', difficulty: 3 },
   { name: 'Constellations', tag: 'science', difficulty: 3 },
-  { name: 'Space Missions', tag: 'science', difficulty: 3 },
   { name: 'Vitamins & Minerals', tag: 'science', difficulty: 2 },
   { name: 'Bones of the Body', tag: 'science', difficulty: 3 },
   { name: 'Weather Phenomena', tag: 'science', difficulty: 2 },
   { name: 'Types of Energy', tag: 'science', difficulty: 2 },
-  { name: 'Geological Eras', tag: 'science', difficulty: 3 },
-  { name: 'Lab Equipment', tag: 'science', difficulty: 3 },
   { name: 'Units of Measurement', tag: 'science', difficulty: 2 },
   { name: 'Psychology Terms', tag: 'science', difficulty: 2 },
-  { name: 'Astronomers', tag: 'science', difficulty: 3 },
-  { name: 'Physics Concepts', tag: 'science', difficulty: 3 },
-  { name: 'Types of Clouds', tag: 'science', difficulty: 3 },
-  { name: 'Famous Experiments', tag: 'science', difficulty: 3 },
   { name: 'Biomes & Ecosystems', tag: 'science', difficulty: 2 },
-  { name: 'Genetics Terms', tag: 'science', difficulty: 3 },
   { name: 'Computer Science Terms', tag: 'science', difficulty: 2 },
 
   // Sports
@@ -265,7 +245,6 @@ const CATEGORIES = [
   { name: 'Adhesives', tag: 'things', difficulty: 3 },
   { name: 'Yoga Poses', tag: 'things', difficulty: 3 },
   { name: 'Social Media Platforms', tag: 'things', difficulty: 1 },
-  { name: 'Apps', tag: 'things', difficulty: 2 },
   { name: 'Card Games', tag: 'things', difficulty: 2 },
   { name: 'Hairstyles', tag: 'things', difficulty: 2 },
   { name: 'Luxury Brands', tag: 'things', difficulty: 2 },
@@ -277,21 +256,21 @@ const CATEGORIES = [
   { name: 'Types of Hats', tag: 'things', difficulty: 2 },
   { name: 'Bags & Luggage', tag: 'things', difficulty: 2 },
   { name: 'Cleaning Products', tag: 'things', difficulty: 2 },
-  { name: 'Workout Types', tag: 'things', difficulty: 2 },
   { name: 'Military Ranks', tag: 'things', difficulty: 3 },
   { name: 'Legal Terms', tag: 'things', difficulty: 3 },
-  { name: 'Baby Names', tag: 'things', difficulty: 1 },
   { name: 'Hobbies', tag: 'things', difficulty: 1 },
   { name: 'Types of Stores', tag: 'things', difficulty: 1 },
   { name: 'Newspapers', tag: 'things', difficulty: 2 },
   { name: 'Car Models', tag: 'things', difficulty: 2 },
   { name: 'Types of Boats', tag: 'things', difficulty: 2 },
   { name: 'Cosmetics & Makeup', tag: 'things', difficulty: 2 },
-  { name: 'Wedding Traditions', tag: 'things', difficulty: 2 },
   { name: 'Tech Companies', tag: 'things', difficulty: 2 },
   { name: 'Emojis', tag: 'things', difficulty: 2 },
   { name: 'Dog Commands', tag: 'things', difficulty: 3 },
   { name: 'Types of Knots', tag: 'things', difficulty: 3 },
+  { name: 'Electronic Equipment', tag: 'things', difficulty: 2 },
+  { name: 'Crayon Colors', tag: 'things', difficulty: 1 },
+  { name: 'Occupations', tag: 'things', difficulty: 1 },
 
   // Humor & Creative
   { name: 'Things People Wear on Head or Face', tag: 'humor', difficulty: 1 },
@@ -319,6 +298,14 @@ const CATEGORIES = [
   { name: 'Baby Boomer Slang', tag: 'humor', difficulty: 2 },
   { name: 'Millennial Slang', tag: 'humor', difficulty: 2 },
   { name: 'Gen Z Slang', tag: 'humor', difficulty: 2 },
+  { name: 'Things That Are Blue', tag: 'humor', difficulty: 1 },
+  { name: 'Things That Are Green', tag: 'humor', difficulty: 1 },
+  { name: 'Things That Are Yellow', tag: 'humor', difficulty: 1 },
+  { name: 'Things That Are White', tag: 'humor', difficulty: 1 },
+  { name: 'Things That Are Black', tag: 'humor', difficulty: 1 },
+  { name: 'Things at a Hardware Store', tag: 'humor', difficulty: 1 },
+  { name: 'Things at a Grocery Store', tag: 'humor', difficulty: 1 },
+  { name: 'Things at a Convenience Store', tag: 'humor', difficulty: 1 },
 
 ];
 

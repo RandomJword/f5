@@ -313,4 +313,49 @@ const CATEGORIES = [
 const STANDARD_LETTERS = 'ABCDEFGHIJKLMNOPRSTUVWY'.split('');
 const EXPERT_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-export { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS };
+// Easy mode: 76 universally accessible categories
+const EASY_CATEGORIES = new Set([
+  // Nature
+  'Animals', 'Birds', 'Flowers', 'Trees', 'Fish & Sea Life',
+  'Mammals', 'Farm Animals',
+  // Food & Drink
+  'Fruits', 'Vegetables', 'Spices & Herbs', 'Cocktails & Drinks',
+  'Desserts & Pastries', 'Cuisines', 'Candy & Chocolate',
+  'Grains & Cereals', 'Tropical Fruits', 'Ice Cream Flavors',
+  'Pizza Toppings', 'Asian Noodle Dishes',
+  // Geography
+  'Countries', 'World Cities', 'U.S. States', 'Mountains', 'Islands',
+  'Asian Countries', 'Oceans & Seas', 'Continents & Regions',
+  'U.S. Cities', 'Colleges & Universities',
+  // Entertainment
+  'Movies', 'Musical Artists', 'Actors & Actresses', 'Disney Characters',
+  // Science
+  'Body Parts & Organs', 'Vitamins & Minerals', 'Weather Phenomena',
+  // Things
+  'Car Brands', 'Clothing Items', 'Musical Instruments', 'Languages',
+  'Professions', 'Furniture', 'Colors', 'Holidays & Celebrations',
+  'Toys', 'Kitchen Items', 'Transportation', 'Social Media Platforms',
+  'Office Supplies', 'School Subjects', 'Hobbies',
+  // Humor & Creative
+  'Things People Wear on Head or Face', 'Excuses to Skip Work or School',
+  'Exclamations', 'Things in a Junk Drawer', 'Things That Are Round',
+  'Things That Come in Pairs', 'Things at a Yard Sale',
+  'Things in a Hotel Room', 'Things in a Purse',
+  'Things That Are Sticky', 'Things That Are Red',
+  "Things You'd Bring Camping", 'Things in a Refrigerator',
+  "Things You'd Find in a Backpack", 'Bad Gift Ideas',
+  'Things That Make Noise at Night', "Things You'd Find at the Beach",
+  'Weird Pizza Toppings', 'Things That Are Blue', 'Things That Are Green',
+  'Things That Are Yellow', 'Things That Are White',
+  'Things That Are Black', 'Things at a Grocery Store',
+  'Things at a Convenience Store',
+]);
+
+function getPool(mode) {
+  if (mode === 'easy') {
+    return CATEGORIES.filter(c => EASY_CATEGORIES.has(c.name));
+  }
+  return CATEGORIES;
+}
+
+export { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, EASY_CATEGORIES, getPool };

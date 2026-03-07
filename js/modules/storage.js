@@ -99,12 +99,15 @@ function clearGameState() {
 }
 
 // Shuffle-bag cycle: tracks all categories used until pool is exhausted
-function getUsedCategoryCycle() {
-  return get('category_cycle', []);
+// Mode parameter separates easy vs standard bags
+function getUsedCategoryCycle(mode = 'standard') {
+  const k = mode === 'easy' ? 'category_cycle_easy' : 'category_cycle';
+  return get(k, []);
 }
 
-function setUsedCategoryCycle(names) {
-  set('category_cycle', names);
+function setUsedCategoryCycle(names, mode = 'standard') {
+  const k = mode === 'easy' ? 'category_cycle_easy' : 'category_cycle';
+  set(k, names);
 }
 
 function getRecentLetters() {

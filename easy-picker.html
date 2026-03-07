@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F5 — Easy Mode Category Picker</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#111;color:#ddd;padding:1.5rem;max-width:1100px;margin:0 auto;line-height:1.5}
+h1{font-size:1.8rem;color:#c9a84c;margin-bottom:0.25rem}
+.subtitle{color:#888;margin-bottom:1rem;font-size:0.85rem}
+
+.sticky-bar{position:sticky;top:0;background:#111;padding:0.75rem 0;z-index:10;border-bottom:1px solid #333;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center}
+.sticky-bar button{padding:0.35rem 0.75rem;background:#222;color:#ddd;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:0.78rem;font-family:inherit}
+.sticky-bar button:hover{background:#333;border-color:#666}
+.stats{margin-left:auto;font-size:0.85rem;color:#aaa;display:flex;gap:1.25rem}
+.stats .n{color:#c9a84c;font-weight:700;font-size:1rem}
+
+.legend{display:flex;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.5rem;font-size:0.78rem;color:#888}
+.legend span{display:flex;align-items:center;gap:0.35rem}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block;border:2px solid}
+.sw-suggested{background:transparent;border-color:#c9a84c}
+.sw-flagged{background:transparent;border-color:#c0392b}
+.sw-neutral{background:#1a1a1a;border-color:#252525}
+
+.tag-section{margin-bottom:2rem}
+.tag-head{display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.6rem;border-bottom:1px solid #2a2a2a;padding-bottom:0.4rem}
+.tag-head h2{color:#c9a84c;font-size:1rem;text-transform:capitalize}
+.tag-head .tc{color:#666;font-size:0.75rem}
+.tag-head .ta{margin-left:auto;display:flex;gap:0.4rem}
+.tag-head .ta button{padding:0.15rem 0.45rem;background:none;border:1px solid #333;color:#888;border-radius:3px;cursor:pointer;font-size:0.68rem;font-family:inherit}
+.tag-head .ta button:hover{color:#c9a84c;border-color:#c9a84c}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.4rem}
+label.item{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.65rem;border-radius:5px;background:#1a1a1a;border:2px solid #252525;cursor:pointer;transition:background 0.12s,border-color 0.12s}
+label.item:hover{background:#222}
+label.item.on{background:#1e2518;border-color:#3a5a2a}
+label.item.suggested{border-color:#c9a84c}
+label.item.suggested.on{border-color:#c9a84c;background:#2a2518}
+label.item.flagged{border-color:#c0392b}
+label.item.flagged.on{border-color:#c0392b;background:#2a1818}
+label.item input{width:16px;height:16px;accent-color:#c9a84c;flex-shrink:0}
+label.item .nm{flex:1;font-size:0.85rem}
+label.item .df{font-size:0.65rem;padding:0.1rem 0.35rem;border-radius:3px;font-weight:600}
+label.item .flag{font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:3px;font-weight:600;background:#3a1a1a;color:#e74c3c;margin-left:0.25rem}
+.d1{background:#1a3a1a;color:#6a6}.d2{background:#3a3a1a;color:#aa6}.d3{background:#3a1a1a;color:#a66}
+
+.output{margin-top:2rem;border-top:2px solid #333;padding-top:1.5rem}
+.output h2{color:#c9a84c;font-size:1.1rem;margin-bottom:0.6rem}
+.output textarea{width:100%;height:180px;background:#0a0a0a;color:#ccc;border:1px solid #333;border-radius:6px;padding:0.75rem;font-family:Menlo,Consolas,monospace;font-size:0.75rem;resize:vertical}
+.output button{margin-top:0.4rem;padding:0.5rem 1.5rem;background:#c9a84c;color:#111;border:none;border-radius:4px;font-weight:700;cursor:pointer;font-size:0.85rem}
+.output button:hover{background:#d4b35c}
+
+.filter-bar{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.filter-bar button{padding:0.3rem 0.6rem;background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:4px;cursor:pointer;font-size:0.72rem;font-family:inherit}
+.filter-bar button:hover,.filter-bar button.active{color:#c9a84c;border-color:#c9a84c}
+
+@media(max-width:600px){.grid{grid-template-columns:1fr}.stats{margin-left:0;flex-basis:100%}}
+</style>
+</head>
+<body>
+
+<h1>F5 Easy Mode Picker</h1>
+<p class="subtitle">Select ~50 universally accessible categories for Easy mode. Gold border = suggested. Red border = culturally specific (US sports, English lit, Western slang, etc.).</p>
+
+<div class="legend">
+  <span><span class="sw sw-suggested"></span> Suggested for Easy</span>
+  <span><span class="sw sw-flagged"></span> Culturally specific</span>
+  <span><span class="sw sw-neutral"></span> Neutral</span>
+</div>
+
+<div class="filter-bar">
+  <button onclick="showAll()" class="active" id="fAll">Show All</button>
+  <button onclick="showOnly('suggested')" id="fSugg">Suggested Only</button>
+  <button onclick="showOnly('flagged')" id="fFlag">Flagged Only</button>
+  <button onclick="showOnly('unchecked')" id="fUnch">Unchecked Only</button>
+</div>
+
+<div class="sticky-bar">
+  <button onclick="selSuggested()">Select Suggested</button>
+  <button onclick="selNone()">Deselect All</button>
+  <div class="stats">
+    <span>Selected: <span class="n" id="ct">0</span></span>
+    <span>Total: <span class="n" id="tt">0</span></span>
+  </div>
+</div>
+
+<div id="container"></div>
+
+<div class="output">
+  <h2>Easy Categories Array (paste back to me)</h2>
+  <textarea id="out" readonly></textarea>
+  <button onclick="copyOut()">Copy to Clipboard</button>
+</div>
+
+<script>
+const C = [
+  { n:'Animals', t:'nature', d:1 },
+  { n:'Birds', t:'nature', d:2 },
+  { n:'Flowers', t:'nature', d:2 },
+  { n:'Trees', t:'nature', d:2 },
+  { n:'Dog Breeds', t:'nature', d:2 },
+  { n:'Fish & Sea Life', t:'nature', d:2 },
+  { n:'Insects', t:'nature', d:2 },
+  { n:'Reptiles & Amphibians', t:'nature', d:3 },
+  { n:'Mammals', t:'nature', d:1 },
+  { n:'Mushrooms & Fungi', t:'nature', d:3 },
+  { n:'Sharks', t:'nature', d:3 },
+  { n:'Primates', t:'nature', d:3 },
+  { n:'Freshwater Fish', t:'nature', d:3 },
+  { n:'Farm Animals', t:'nature', d:1 },
+  { n:'Nocturnal Animals', t:'nature', d:3 },
+  { n:'Tropical Birds', t:'nature', d:3 },
+  { n:'Berries', t:'nature', d:2 },
+  { n:'Herbs (Botanical)', t:'nature', d:2 },
+  { n:'Snakes', t:'nature', d:2 },
+
+  { n:'Fruits', t:'food', d:1 },
+  { n:'Vegetables', t:'food', d:1 },
+  { n:'Spices & Herbs', t:'food', d:2 },
+  { n:'Cheeses', t:'food', d:3 },
+  { n:'Cocktails & Drinks', t:'food', d:2 },
+  { n:'Desserts & Pastries', t:'food', d:2 },
+  { n:'Pasta Types', t:'food', d:3 },
+  { n:'Cuisines', t:'food', d:2 },
+  { n:'Nuts & Seeds', t:'food', d:3 },
+  { n:'Breads', t:'food', d:2 },
+  { n:'Candy & Chocolate', t:'food', d:2 },
+  { n:'Coffee Drinks', t:'food', d:2 },
+  { n:'Wines', t:'food', d:2 },
+  { n:'Beers & Breweries', t:'food', d:2 },
+  { n:'Teas', t:'food', d:2 },
+  { n:'Breakfast Foods', t:'food', d:1 },
+  { n:'Soups', t:'food', d:2 },
+  { n:'Sauces & Condiments', t:'food', d:2 },
+  { n:'Seafood', t:'food', d:2 },
+  { n:'Grains & Cereals', t:'food', d:2 },
+  { n:'Tropical Fruits', t:'food', d:2 },
+  { n:'Ice Cream Flavors', t:'food', d:1 },
+  { n:'Fast Food Chains', t:'food', d:1 },
+  { n:'Pizza Toppings', t:'food', d:1 },
+  { n:'Sandwiches', t:'food', d:2 },
+  { n:'Street Foods', t:'food', d:2 },
+  { n:'Salads', t:'food', d:2 },
+  { n:'Asian Noodle Dishes', t:'food', d:3 },
+
+  { n:'Countries', t:'geography', d:1 },
+  { n:'World Cities', t:'geography', d:1 },
+  { n:'U.S. States', t:'geography', d:1 },
+  { n:'Rivers', t:'geography', d:2 },
+  { n:'Mountains', t:'geography', d:2 },
+  { n:'Islands', t:'geography', d:2 },
+  { n:'Lakes', t:'geography', d:2 },
+  { n:'National Parks', t:'geography', d:2 },
+  { n:'Bodies of Water', t:'geography', d:2 },
+  { n:'Capitals', t:'geography', d:2 },
+  { n:'European Countries', t:'geography', d:1 },
+  { n:'African Countries', t:'geography', d:2 },
+  { n:'Asian Countries', t:'geography', d:2 },
+  { n:'Oceans & Seas', t:'geography', d:2 },
+  { n:'Continents & Regions', t:'geography', d:1 },
+  { n:'Waterfalls', t:'geography', d:3 },
+  { n:'Beaches', t:'geography', d:2 },
+  { n:'U.S. Cities', t:'geography', d:1 },
+  { n:'Caribbean Islands', t:'geography', d:2 },
+  { n:'South American Countries', t:'geography', d:2 },
+  { n:'Bays & Gulfs', t:'geography', d:3 },
+  { n:'World Landmarks', t:'geography', d:1 },
+  { n:'Bridges', t:'geography', d:2 },
+  { n:'Ski Resorts', t:'geography', d:2 },
+  { n:'Neighborhoods & Districts', t:'geography', d:3 },
+  { n:'Airports', t:'geography', d:2 },
+  { n:'Colleges & Universities', t:'geography', d:2 },
+  { n:'Famous Streets', t:'geography', d:2 },
+  { n:'Famous Buildings', t:'geography', d:2 },
+
+  { n:'Movies', t:'entertainment', d:1 },
+  { n:'TV Shows', t:'entertainment', d:1 },
+  { n:'Musical Artists', t:'entertainment', d:1 },
+  { n:'Songs', t:'entertainment', d:2 },
+  { n:'Broadway Musicals', t:'entertainment', d:3 },
+  { n:'Video Games', t:'entertainment', d:2 },
+  { n:'Board Games', t:'entertainment', d:3 },
+  { n:'Cartoon Characters', t:'entertainment', d:2 },
+  { n:'Actors & Actresses', t:'entertainment', d:1 },
+  { n:'Comedians', t:'entertainment', d:2 },
+  { n:'Animated Movies', t:'entertainment', d:2 },
+  { n:'Horror Movies', t:'entertainment', d:2 },
+  { n:'Sitcoms', t:'entertainment', d:2 },
+  { n:'Disney Characters', t:'entertainment', d:1 },
+  { n:'Superhero Characters', t:'entertainment', d:1 },
+  { n:'Movie Directors', t:'entertainment', d:2 },
+  { n:'Anime', t:'entertainment', d:2 },
+  { n:'Documentaries', t:'entertainment', d:2 },
+  { n:'Sci-Fi Movies', t:'entertainment', d:2 },
+  { n:'Action Movies', t:'entertainment', d:1 },
+  { n:'Romantic Comedies', t:'entertainment', d:2 },
+  { n:'Rock Bands', t:'entertainment', d:1 },
+  { n:'Hip-Hop Artists', t:'entertainment', d:2 },
+  { n:'Country Music Artists', t:'entertainment', d:2 },
+  { n:'Jazz Musicians', t:'entertainment', d:3 },
+  { n:'Music Genres', t:'entertainment', d:2 },
+  { n:'Music Festivals', t:'entertainment', d:2 },
+  { n:'Game Shows', t:'entertainment', d:2 },
+  { n:"Children's TV Shows", t:'entertainment', d:2 },
+  { n:'Movie Franchises', t:'entertainment', d:1 },
+  { n:'90s TV Shows', t:'entertainment', d:2 },
+  { n:'80s Music', t:'entertainment', d:2 },
+  { n:'60s Movies', t:'entertainment', d:3 },
+  { n:'70s Movies', t:'entertainment', d:3 },
+  { n:'80s Movies', t:'entertainment', d:2 },
+  { n:'90s Movies', t:'entertainment', d:2 },
+  { n:'2000s Movies', t:'entertainment', d:2 },
+  { n:'60s Songs', t:'entertainment', d:3 },
+  { n:'70s Songs', t:'entertainment', d:3 },
+  { n:'80s Songs', t:'entertainment', d:2 },
+  { n:'90s Songs', t:'entertainment', d:2 },
+  { n:'2000s Songs', t:'entertainment', d:2 },
+  { n:'60s Musical Artists', t:'entertainment', d:3 },
+  { n:'70s Musical Artists', t:'entertainment', d:3 },
+  { n:'80s Musical Artists', t:'entertainment', d:2 },
+  { n:'90s Musical Artists', t:'entertainment', d:2 },
+  { n:'2000s Musical Artists', t:'entertainment', d:2 },
+
+  { n:'Authors', t:'arts', d:2 },
+  { n:'Painters', t:'arts', d:2 },
+  { n:'Novels', t:'arts', d:2 },
+  { n:'Poets', t:'arts', d:3 },
+  { n:'Composers', t:'arts', d:3 },
+  { n:'Philosophers', t:'arts', d:3 },
+  { n:'Dances', t:'arts', d:3 },
+  { n:'Sculptors', t:'arts', d:3 },
+  { n:'Playwrights', t:'arts', d:3 },
+  { n:'Art Movements', t:'arts', d:3 },
+  { n:'Shakespeare Plays', t:'arts', d:3 },
+  { n:'Architects', t:'arts', d:3 },
+  { n:'Photographers', t:'arts', d:3 },
+  { n:'Fashion Designers', t:'arts', d:2 },
+  { n:'Graphic Novels & Comics', t:'arts', d:2 },
+  { n:"Children's Books", t:'arts', d:2 },
+  { n:'Ballets', t:'arts', d:3 },
+  { n:'Museums', t:'arts', d:2 },
+  { n:'Fairy Tales & Fables', t:'arts', d:1 },
+  { n:'Fantasy Novels', t:'arts', d:2 },
+  { n:'Science Fiction Novels', t:'arts', d:2 },
+  { n:'Famous Paintings', t:'arts', d:2 },
+  { n:'Poetry Collections', t:'arts', d:3 },
+  { n:'Architecture Terminology', t:'arts', d:3 },
+  { n:'Design Terminology', t:'arts', d:3 },
+  { n:'Art Terminology', t:'arts', d:3 },
+  { n:'Music Terminology', t:'arts', d:3 },
+
+  { n:'U.S. Presidents', t:'history', d:2 },
+  { n:'Historical Figures', t:'history', d:2 },
+  { n:'Mythological Figures', t:'history', d:2 },
+  { n:'Ancient Civilizations', t:'history', d:2 },
+  { n:'World Leaders', t:'history', d:2 },
+  { n:'Royals & Monarchs', t:'history', d:2 },
+  { n:'Wars & Conflicts', t:'history', d:2 },
+  { n:'Civil Rights Leaders', t:'history', d:2 },
+  { n:'Women in History', t:'history', d:2 },
+  { n:'Ancient Greek Figures', t:'history', d:3 },
+
+  { n:'Scientists', t:'science', d:2 },
+  { n:'Chemical Elements', t:'science', d:2 },
+  { n:'Inventions', t:'science', d:2 },
+  { n:'Diseases & Conditions', t:'science', d:3 },
+  { n:'Dinosaurs', t:'science', d:3 },
+  { n:'Body Parts & Organs', t:'science', d:1 },
+  { n:'Minerals & Rocks', t:'science', d:3 },
+  { n:'Planets & Moons', t:'science', d:2 },
+  { n:'Branches of Science', t:'science', d:2 },
+  { n:'Medical Specialties', t:'science', d:3 },
+  { n:'Constellations', t:'science', d:3 },
+  { n:'Vitamins & Minerals', t:'science', d:2 },
+  { n:'Bones of the Body', t:'science', d:3 },
+  { n:'Weather Phenomena', t:'science', d:2 },
+  { n:'Types of Energy', t:'science', d:2 },
+  { n:'Units of Measurement', t:'science', d:2 },
+  { n:'Psychology Terms', t:'science', d:2 },
+  { n:'Biomes & Ecosystems', t:'science', d:2 },
+  { n:'Computer Science Terms', t:'science', d:2 },
+
+  { n:'Olympic Sports', t:'sports', d:2 },
+  { n:'Team Sports', t:'sports', d:2 },
+  { n:'Athletes', t:'sports', d:2 },
+  { n:'Sports Teams', t:'sports', d:1 },
+  { n:'Stadiums & Arenas', t:'sports', d:2 },
+  { n:'Martial Arts', t:'sports', d:2 },
+  { n:'Sports Equipment', t:'sports', d:2 },
+  { n:'Famous Coaches', t:'sports', d:3 },
+  { n:'NBA Players', t:'sports', d:2 },
+  { n:'NFL Teams', t:'sports', d:1 },
+  { n:'Soccer Players', t:'sports', d:2 },
+  { n:'Tennis Players', t:'sports', d:2 },
+  { n:'MLB Teams', t:'sports', d:1 },
+  { n:'NHL Teams', t:'sports', d:2 },
+  { n:'Track & Field Events', t:'sports', d:2 },
+  { n:'Gymnastics Events', t:'sports', d:2 },
+  { n:'Winter Sports', t:'sports', d:2 },
+  { n:'Olympic Host Cities', t:'sports', d:2 },
+  { n:'Baseball Players', t:'sports', d:2 },
+  { n:'College Sports Teams', t:'sports', d:1 },
+
+  { n:'Car Brands', t:'things', d:1 },
+  { n:'Clothing Items', t:'things', d:1 },
+  { n:'Musical Instruments', t:'things', d:2 },
+  { n:'Tools', t:'things', d:2 },
+  { n:'Currencies', t:'things', d:3 },
+  { n:'Languages', t:'things', d:2 },
+  { n:'Gemstones', t:'things', d:3 },
+  { n:'Professions', t:'things', d:1 },
+  { n:'Fabrics & Textiles', t:'things', d:3 },
+  { n:'Brands', t:'things', d:1 },
+  { n:'Furniture', t:'things', d:1 },
+  { n:'Colors', t:'things', d:1 },
+  { n:'Dances & Dance Styles', t:'things', d:2 },
+  { n:'Holidays & Celebrations', t:'things', d:1 },
+  { n:'Phobias', t:'things', d:3 },
+  { n:'Types of Shoes', t:'things', d:2 },
+  { n:'Toys', t:'things', d:2 },
+  { n:'Programming Languages', t:'things', d:2 },
+  { n:'Magazines', t:'things', d:2 },
+  { n:'Religions', t:'things', d:2 },
+  { n:'College Majors', t:'things', d:2 },
+  { n:'Kitchen Items', t:'things', d:1 },
+  { n:'Transportation', t:'things', d:1 },
+  { n:'Adhesives', t:'things', d:3 },
+  { n:'Yoga Poses', t:'things', d:3 },
+  { n:'Social Media Platforms', t:'things', d:1 },
+  { n:'Card Games', t:'things', d:2 },
+  { n:'Hairstyles', t:'things', d:2 },
+  { n:'Luxury Brands', t:'things', d:2 },
+  { n:'Architecture Styles', t:'things', d:3 },
+  { n:'Building Materials', t:'things', d:2 },
+  { n:'Garden Tools', t:'things', d:2 },
+  { n:'Office Supplies', t:'things', d:1 },
+  { n:'School Subjects', t:'things', d:1 },
+  { n:'Types of Hats', t:'things', d:2 },
+  { n:'Bags & Luggage', t:'things', d:2 },
+  { n:'Cleaning Products', t:'things', d:2 },
+  { n:'Military Ranks', t:'things', d:3 },
+  { n:'Legal Terms', t:'things', d:3 },
+  { n:'Hobbies', t:'things', d:1 },
+  { n:'Types of Stores', t:'things', d:1 },
+  { n:'Newspapers', t:'things', d:2 },
+  { n:'Car Models', t:'things', d:2 },
+  { n:'Types of Boats', t:'things', d:2 },
+  { n:'Cosmetics & Makeup', t:'things', d:2 },
+  { n:'Tech Companies', t:'things', d:2 },
+  { n:'Emojis', t:'things', d:2 },
+  { n:'Dog Commands', t:'things', d:3 },
+  { n:'Types of Knots', t:'things', d:3 },
+  { n:'Electronic Equipment', t:'things', d:2 },
+  { n:'Crayon Colors', t:'things', d:1 },
+  { n:'Occupations', t:'things', d:1 },
+
+  { n:'Things People Wear on Head or Face', t:'humor', d:1 },
+  { n:'Excuses to Skip Work or School', t:'humor', d:1 },
+  { n:'Exclamations', t:'humor', d:2 },
+  { n:'Things in a Junk Drawer', t:'humor', d:1 },
+  { n:'Things That Are Round', t:'humor', d:1 },
+  { n:'Things That Come in Pairs', t:'humor', d:1 },
+  { n:'Things at a Yard Sale', t:'humor', d:1 },
+  { n:'Things in a Hotel Room', t:'humor', d:1 },
+  { n:'Things That Bounce', t:'humor', d:2 },
+  { n:'Things in a Purse', t:'humor', d:1 },
+  { n:'Things That Are Sticky', t:'humor', d:2 },
+  { n:'Things That Melt', t:'humor', d:2 },
+  { n:'Things That Are Red', t:'humor', d:1 },
+  { n:"Things You'd Bring Camping", t:'humor', d:1 },
+  { n:'Things in a Refrigerator', t:'humor', d:1 },
+  { n:"Things You'd Find in a Backpack", t:'humor', d:1 },
+  { n:'Bad Gift Ideas', t:'humor', d:2 },
+  { n:'Things That Make Noise at Night', t:'humor', d:2 },
+  { n:'Things Grandparents Say', t:'humor', d:2 },
+  { n:"Things You'd Find at the Beach", t:'humor', d:1 },
+  { n:'Weird Pizza Toppings', t:'humor', d:2 },
+  { n:'GenX Slang', t:'humor', d:2 },
+  { n:'Baby Boomer Slang', t:'humor', d:2 },
+  { n:'Millennial Slang', t:'humor', d:2 },
+  { n:'Gen Z Slang', t:'humor', d:2 },
+  { n:'Things That Are Blue', t:'humor', d:1 },
+  { n:'Things That Are Green', t:'humor', d:1 },
+  { n:'Things That Are Yellow', t:'humor', d:1 },
+  { n:'Things That Are White', t:'humor', d:1 },
+  { n:'Things That Are Black', t:'humor', d:1 },
+  { n:'Things at a Hardware Store', t:'humor', d:1 },
+  { n:'Things at a Grocery Store', t:'humor', d:1 },
+  { n:'Things at a Convenience Store', t:'humor', d:1 },
+];
+
+// Pre-selected: universally accessible (~48 categories)
+const SUGGESTED = new Set([
+  // Nature
+  'Animals', 'Mammals', 'Farm Animals', 'Birds', 'Flowers',
+  'Trees', 'Insects', 'Fish & Sea Life',
+  // Food
+  'Fruits', 'Vegetables', 'Desserts & Pastries', 'Ice Cream Flavors',
+  'Pizza Toppings', 'Seafood', 'Tropical Fruits', 'Cuisines',
+  // Geography
+  'Countries', 'World Cities', 'Continents & Regions', 'World Landmarks',
+  'Mountains', 'Oceans & Seas', 'Islands',
+  // Entertainment
+  'Movies', 'Animated Movies', 'Disney Characters', 'Superhero Characters',
+  'Video Games', 'Movie Franchises',
+  // Science
+  'Body Parts & Organs', 'Planets & Moons', 'Weather Phenomena',
+  // Things
+  'Colors', 'Clothing Items', 'Furniture', 'Kitchen Items', 'Transportation',
+  'Car Brands', 'Musical Instruments', 'Professions', 'Hobbies',
+  'School Subjects', 'Office Supplies', 'Holidays & Celebrations',
+  'Toys', 'Social Media Platforms', 'Languages',
+  // Humor
+  'Things That Are Round', 'Things That Come in Pairs',
+  'Things in a Refrigerator', "Things You'd Find at the Beach",
+  'Things That Are Red', 'Things That Are Blue', 'Things That Are Green',
+  'Things People Wear on Head or Face', 'Things in a Hotel Room',
+  "Things You'd Bring Camping",
+]);
+
+// Flagged: culturally specific (US sports, English lit, Western slang, etc.)
+const FLAGGED = new Set([
+  // US Sports
+  'NFL Teams', 'MLB Teams', 'NBA Players', 'College Sports Teams',
+  'Baseball Players', 'Famous Coaches', 'NHL Teams', 'Stadiums & Arenas',
+  // US-centric
+  'U.S. Presidents', 'U.S. States', 'U.S. Cities', 'National Parks',
+  'Civil Rights Leaders', 'Colleges & Universities',
+  // English literature
+  'Shakespeare Plays', 'Poets', 'Playwrights', 'Poetry Collections',
+  // Western slang/idioms
+  'GenX Slang', 'Baby Boomer Slang', 'Millennial Slang', 'Gen Z Slang',
+  'Exclamations', 'Things Grandparents Say',
+  // Western entertainment decades
+  '60s Movies', '70s Movies', '60s Songs', '70s Songs',
+  '60s Musical Artists', '70s Musical Artists',
+  // Western entertainment specific
+  'Broadway Musicals', 'Sitcoms', 'Game Shows',
+  'Country Music Artists', 'Jazz Musicians', 'Comedians',
+  "Children's TV Shows", '90s TV Shows',
+  // Western high culture
+  'Ballets', 'Sculptors', 'Composers', 'Philosophers',
+  'Architecture Terminology', 'Design Terminology',
+  'Art Terminology', 'Music Terminology',
+  // Western-specific things
+  'Crayon Colors', 'Dog Commands', 'Magazines', 'Newspapers',
+  'College Majors', 'Legal Terms', 'Military Ranks',
+  'Ancient Greek Figures',
+]);
+
+const sel = new Set();
+// Pre-check suggested categories
+C.forEach((c, i) => { if (SUGGESTED.has(c.n)) sel.add(i); });
+
+const TAGS = ['nature','food','geography','entertainment','arts','history','science','sports','things','humor'];
+const LABELS = {nature:'Nature',food:'Food & Drink',geography:'Geography',entertainment:'Entertainment',arts:'Arts & Letters',history:'History',science:'Science',sports:'Sports',things:'Things',humor:'Humor & Creative'};
+const DIFF = ['','Easy','Med','Hard'];
+
+let filterMode = 'all';
+
+function render() {
+  const box = document.getElementById('container');
+  box.innerHTML = '';
+  for (const tag of TAGS) {
+    const items = C.map((c,i)=>({...c,i})).filter(c=>c.t===tag);
+    if (!items.length) continue;
+
+    const visible = items.filter(c => {
+      if (filterMode === 'suggested') return SUGGESTED.has(c.n);
+      if (filterMode === 'flagged') return FLAGGED.has(c.n);
+      if (filterMode === 'unchecked') return !sel.has(c.i);
+      return true;
+    });
+    if (!visible.length) continue;
+
+    const selCount = items.filter(c=>sel.has(c.i)).length;
+    const sec = document.createElement('div');
+    sec.className = 'tag-section';
+    sec.innerHTML = `<div class="tag-head"><h2>${LABELS[tag]}</h2><span class="tc">${selCount} / ${items.length}</span><div class="ta"><button onclick="tagAll('${tag}')">All</button><button onclick="tagNone('${tag}')">None</button></div></div>`;
+    const g = document.createElement('div');
+    g.className = 'grid';
+    for (const c of visible) {
+      const on = sel.has(c.i);
+      const isSugg = SUGGESTED.has(c.n);
+      const isFlag = FLAGGED.has(c.n);
+      const lbl = document.createElement('label');
+      lbl.className = `item${on?' on':''}${isSugg?' suggested':''}${isFlag?' flagged':''}`;
+      let extra = '';
+      if (isFlag) extra = '<span class="flag">cultural</span>';
+      lbl.innerHTML = `<input type="checkbox" ${on?'checked':''} data-i="${c.i}"><span class="nm">${c.n}</span>${extra}<span class="df d${c.d}">${DIFF[c.d]}</span>`;
+      lbl.querySelector('input').onchange = e => {
+        if (e.target.checked) sel.add(c.i); else sel.delete(c.i);
+        lbl.classList.toggle('on', e.target.checked);
+        updStats();
+        genOut();
+      };
+      g.appendChild(lbl);
+    }
+    sec.appendChild(g);
+    box.appendChild(sec);
+  }
+  updStats();
+  genOut();
+}
+
+function updStats() {
+  document.getElementById('ct').textContent = sel.size;
+  document.getElementById('tt').textContent = C.length;
+}
+
+function genOut() {
+  const names = C.filter((_,i) => sel.has(i)).map(c => c.n);
+  const js = `const EASY_CATEGORIES = new Set([\n${names.map(n => `  '${n.replace(/'/g,"\\'")}',`).join('\n')}\n]);`;
+  document.getElementById('out').value = js;
+}
+
+function copyOut() {
+  const ta = document.getElementById('out');
+  ta.select();
+  document.execCommand('copy');
+  event.target.textContent = 'Copied!';
+  setTimeout(() => event.target.textContent = 'Copy to Clipboard', 1500);
+}
+
+function selSuggested() { sel.clear(); C.forEach((c,i) => { if (SUGGESTED.has(c.n)) sel.add(i); }); render(); }
+function selNone() { sel.clear(); render(); }
+function tagAll(t) { C.forEach((c,i) => { if (c.t===t) sel.add(i); }); render(); }
+function tagNone(t) { C.forEach((c,i) => { if (c.t===t) sel.delete(i); }); render(); }
+
+function showAll() { filterMode = 'all'; setActiveFilter('fAll'); render(); }
+function showOnly(mode) { filterMode = mode; setActiveFilter('f' + mode.charAt(0).toUpperCase() + mode.slice(1)); render(); }
+function setActiveFilter(id) {
+  document.querySelectorAll('.filter-bar button').forEach(b => b.classList.remove('active'));
+  const map = { suggested: 'fSugg', flagged: 'fFlag', unchecked: 'fUnch' };
+  document.getElementById(id).classList.add('active');
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 // F5 Game Engine — pure functions, zero side effects
 // State creation, category/letter selection, scoring
 
-import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS } from './categories.js';
+import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, getPool } from './categories.js';
 import * as storage from './storage.js';
 
 // Fisher-Yates shuffle (returns new array)
@@ -20,18 +20,19 @@ function shuffle(arr) {
  * If we can't fill 5 unique tags, allow duplicates for remaining slots.
  */
 function selectCategories(difficulty = 'standard') {
-  const pool = CATEGORIES;
+  const pool = getPool(difficulty);
 
   // Shuffle-bag: exhaust all categories before any repeats.
   // Track used categories in current cycle. Reset when pool runs dry.
-  const usedNames = new Set(storage.getUsedCategoryCycle());
+  // Separate bag per mode so switching doesn't reset progress.
+  const usedNames = new Set(storage.getUsedCategoryCycle(difficulty));
 
   // Available = categories not yet used this cycle
   let available = pool.filter(c => !usedNames.has(c.name));
 
   // If fewer than 5 available (can't fill a game), start a new cycle
   if (available.length < 5) {
-    storage.setUsedCategoryCycle([]);
+    storage.setUsedCategoryCycle([], difficulty);
     available = pool;
   }
 
@@ -90,7 +91,8 @@ function selectLetters(mode = 'standard') {
  * Create a new game state object.
  */
 function newGame(options = {}) {
-  const difficulty = options.difficulty || 'standard';
+  const settings = storage.getSettings();
+  const difficulty = options.difficulty || settings.difficulty || 'standard';
   const letterMode = options.letterMode || 'standard';
 
   const categories = selectCategories(difficulty);
@@ -98,9 +100,9 @@ function newGame(options = {}) {
 
   // Record selections immediately (even if game is abandoned)
   const catNames = categories.map(c => c.name);
-  const cycle = storage.getUsedCategoryCycle();
+  const cycle = storage.getUsedCategoryCycle(difficulty);
   cycle.push(...catNames);
-  storage.setUsedCategoryCycle(cycle);
+  storage.setUsedCategoryCycle(cycle, difficulty);
   storage.addRecentLetters([...letters]);
 
   // Empty 5x5 grid

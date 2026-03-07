@@ -144,6 +144,17 @@ function bindGlobalEvents() {
     });
   }
 
+  // Settings — difficulty selector
+  const difficultySelect = document.getElementById('difficulty-select');
+  if (difficultySelect) {
+    const settings = storage.getSettings();
+    difficultySelect.value = settings.difficulty || 'standard';
+    difficultySelect.addEventListener('change', (e) => {
+      const current = storage.getSettings();
+      storage.setSettings({ ...current, difficulty: e.target.value });
+    });
+  }
+
   // Settings — theme selector
   const themeSelect = document.getElementById('theme-select');
   if (themeSelect) {

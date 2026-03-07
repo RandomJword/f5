@@ -369,8 +369,8 @@ function showResults(game, animate = true) {
       </div>`;
     resultsGrid.appendChild(catHeader);
 
-    // Track denied appeals for explanation rows
-    const deniedAppeals = [];
+    // Track rejected cells for explanation rows below
+    const rejectedCells = [];
 
     // Cells
     letters.forEach((letter, c) => {
@@ -412,7 +412,7 @@ function showResults(game, animate = true) {
       } else if (answer) {
         badge.style.color = 'var(--f5-invalid)';
         // Short label in cell — full explanation goes in spanning row below
-        badge.textContent = (result.appealed && !result.valid) ? 'Appeal denied' : (result.explanation || 'Invalid');
+        badge.textContent = result.appealed ? 'Appeal denied' : 'Invalid';
       } else {
         badge.style.color = 'var(--f5-text-muted)';
         badge.textContent = 'Empty';
@@ -463,16 +463,16 @@ function showResults(game, animate = true) {
         cell.appendChild(overturnedEl);
       }
 
-      // Collect denied appeals for explanation rows
-      if (result.appealed && !result.valid && answer) {
-        deniedAppeals.push({ letter, answer, explanation: result.explanation || '', col: c });
+      // Collect all rejected cells with explanations for spanning rows
+      if (!result.valid && answer && result.explanation) {
+        rejectedCells.push({ letter, answer, explanation: result.explanation, col: c, appealed: !!result.appealed });
       }
 
       resultsGrid.appendChild(cell);
     });
 
-    // Insert explanation rows for denied appeals (span all 5 letter columns)
-    for (const da of deniedAppeals) {
+    // Insert explanation rows for rejected cells (span all 5 letter columns)
+    for (const da of rejectedCells) {
       // Empty spacer in column 1 (category label column)
       const spacer = document.createElement('div');
       spacer.style.cssText = `

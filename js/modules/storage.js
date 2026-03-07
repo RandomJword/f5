@@ -106,6 +106,29 @@ function clearGameState() {
   remove('active_game');
 }
 
+// Recent selections (tracks even abandoned games)
+function getRecentCategories() {
+  return get('recent_categories', []);
+}
+
+function addRecentCategories(names) {
+  const recent = getRecentCategories();
+  recent.unshift(names);
+  if (recent.length > 25) recent.length = 25;
+  set('recent_categories', recent);
+}
+
+function getRecentLetters() {
+  return get('recent_letters', []);
+}
+
+function addRecentLetters(letters) {
+  const recent = getRecentLetters();
+  recent.unshift(letters);
+  if (recent.length > 3) recent.length = 3;
+  set('recent_letters', recent);
+}
+
 // Game history
 function getHistory() {
   return get('history', []);
@@ -166,6 +189,10 @@ export {
   saveGameState,
   getGameState,
   clearGameState,
+  getRecentCategories,
+  addRecentCategories,
+  getRecentLetters,
+  addRecentLetters,
   getHistory,
   addToHistory,
   clearCache,

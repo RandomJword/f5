@@ -21,12 +21,12 @@ function shuffle(arr) {
  */
 function selectCategories(difficulty = 'standard') {
   const pool = CATEGORIES;
-  const history = storage.getHistory();
   const recentNames = new Set();
-  for (let i = 0; i < Math.min(25, history.length); i++) {
-    if (history[i].categories) {
-      history[i].categories.forEach(name => recentNames.add(name));
-    }
+
+  // Use dedicated recent-categories tracker (includes abandoned games)
+  const recentSets = storage.getRecentCategories();
+  for (const names of recentSets) {
+    names.forEach(name => recentNames.add(name));
   }
 
   // Prefer categories not used in last 3 games
@@ -64,12 +64,12 @@ function selectCategories(difficulty = 'standard') {
  */
 function selectLetters(mode = 'standard') {
   const pool = mode === 'expert' ? EXPERT_LETTERS : STANDARD_LETTERS;
-  const history = storage.getHistory();
   const recentLetters = new Set();
-  for (let i = 0; i < Math.min(2, history.length); i++) {
-    if (history[i].letters) {
-      history[i].letters.forEach(l => recentLetters.add(l));
-    }
+
+  // Use dedicated recent-letters tracker (includes abandoned games)
+  const recentSets = storage.getRecentLetters();
+  for (const letters of recentSets) {
+    letters.forEach(l => recentLetters.add(l));
   }
 
   // Prefer letters not used recently
@@ -92,6 +92,10 @@ function newGame(options = {}) {
 
   const categories = selectCategories(difficulty);
   const letters = selectLetters(letterMode);
+
+  // Record selections immediately (even if game is abandoned)
+  storage.addRecentCategories(categories.map(c => c.name));
+  storage.addRecentLetters([...letters]);
 
   // Empty 5x5 grid
   const grid = [];

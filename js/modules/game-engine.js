@@ -23,7 +23,7 @@ function selectCategories(difficulty = 'standard') {
   const pool = CATEGORIES;
   const history = storage.getHistory();
   const recentNames = new Set();
-  for (let i = 0; i < Math.min(3, history.length); i++) {
+  for (let i = 0; i < Math.min(25, history.length); i++) {
     if (history[i].categories) {
       history[i].categories.forEach(name => recentNames.add(name));
     }

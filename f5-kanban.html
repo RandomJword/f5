@@ -171,7 +171,7 @@ header h1 span{font-family:var(--font);font-weight:400;color:var(--text3);font-s
   <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#db2777;color:#fff">S4</span>
   <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#059669;color:#fff">S5</span>
   <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#d97706;color:#fff">S6</span>
-  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#dc2626;color:#fff">S7</span>
+  <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#0d9488;color:#fff">Post</span>
 </div>
 
 <div class="board">
@@ -242,7 +242,7 @@ header h1 span{font-family:var(--font);font-weight:400;color:var(--text3);font-s
 
 <script>
 // --- DATA ---
-var STORAGE_KEY = 'f5-kanban-v2';
+var STORAGE_KEY = 'f5-kanban-v3';
 var TAG_DEFS = [
   {id:'ui',label:'UI',cls:'ui'},
   {id:'core',label:'Core',cls:'core'},
@@ -267,7 +267,7 @@ var SPRINT_DEFS = [
   {id:'s4',label:'S4 \u2014 AI Integration',color:'#db2777'},
   {id:'s5',label:'S5 \u2014 Scoring & Results',color:'#059669'},
   {id:'s6',label:'S6 \u2014 Persistence & Stats',color:'#d97706'},
-  {id:'s7',label:'S7 \u2014 Themes & Polish',color:'#dc2626'},
+  {id:'post',label:'Post \u2014 Deploy & Polish',color:'#0d9488'},
 ];
 
 var DEFAULT_CARDS = [
@@ -401,57 +401,65 @@ var DEFAULT_CARDS = [
     desc:'Cell-by-cell reveal (120ms stagger), running count display, ease-out cubic score counter animation to final n\u00b2 total. Breakdown fades in after last cell.',
     tags:['ui','polish'],sprint:'s5',created:52},
 
-  // --- UP NEXT: S6 Persistence & Stats ---
-  {id:genId(),col:'next',title:'Game History',
-    desc:'Save completed games to f5_history in localStorage: id, date, categories, letters, grid with results, score breakdown. Already implemented in storage.addToHistory().',
+  // --- DONE: S6 Persistence & Stats ---
+  {id:genId(),col:'done',title:'Game History',
+    desc:'Save completed games to f5_history in localStorage. storage.addToHistory() with id, date, categories, letters, grid, results, score.',
     tags:['data'],sprint:'s6',created:60},
-  {id:genId(),col:'next',title:'Stats Aggregation',
-    desc:'stats.js: compute from history array. Total games, avg score, best score, avg fill rate, best/worst categories, letter difficulty analysis, streaks (consecutive days played).',
+  {id:genId(),col:'done',title:'Stats Aggregation',
+    desc:'stats.js: compute from history. Total games, avg score, best score, avg fill rate, best/worst categories, letter difficulty, streaks.',
     tags:['data','core'],sprint:'s6',created:61},
-  {id:genId(),col:'next',title:'History Screen',
-    desc:'Scrollable list of past games with date, score, difficulty. Tap to review: shows the full grid with results, AI explanations, score breakdown. Filter by date or difficulty.',
+  {id:genId(),col:'done',title:'Stats Dashboard',
+    desc:'Summary cards, score sparkline, best/worst categories, letter performance, game history list. View Stats button on results screen.',
     tags:['ui'],sprint:'s6',created:62},
-  {id:genId(),col:'next',title:'Stats Dashboard',
-    desc:'Visual stats: total games, avg score, best score, current streak. Bar chart or sparkline of score trend. Most/least successful categories. Most/least successful letters.',
-    tags:['ui'],sprint:'s6',created:63},
 
-  // --- BACKLOG: S7 Themes & Polish ---
-  {id:genId(),col:'backlog',title:'Retro Bookshelf Theme',
-    desc:'Full CSS implementation: Playfair Display + Libre Franklin + Courier Prime. Warm parchment palette. Ruled-line empty cells. Gold tab hover. Stamp animation on cell fill.',
-    tags:['theme'],sprint:'s7',created:70},
-  {id:genId(),col:'backlog',title:'Minimal Modernist Theme',
-    desc:'Inter only. Pure white + near-black + Rams orange (accent on interaction only). Hairline borders. Sequential grid fade-in on game start. Blinking colon on timer.',
-    tags:['theme'],sprint:'s7',created:71},
-  {id:genId(),col:'backlog',title:'Neon Arcade Theme',
-    desc:'Orbitron + Exo 2. Dark void bg. Cyan/magenta/lime neon palette. Glowing grid lines + text-shadow. Neon-tube-ignition flicker on cell fill. CRT scan-line on critical timer.',
-    tags:['theme'],sprint:'s7',created:72},
-  {id:genId(),col:'backlog',title:'Library Study Theme',
-    desc:'EB Garamond + Source Sans 3. Dark mahogany/brass palette. Desk lamp radial gradient on game start. Brass frame on timer (mantel clock). Italic grid text (ledger feel).',
-    tags:['theme'],sprint:'s7',created:73},
-  {id:genId(),col:'backlog',title:'Pop Art Theme',
-    desc:'Bangers + Archivo. Bold yellow/blue/red + thick black borders. CSS Ben-Day dot pattern on empty cells. Speech-bubble timer. Comic burst starburst on cell fill. Shake animation at critical.',
-    tags:['theme'],sprint:'s7',created:74},
-  {id:genId(),col:'backlog',title:'Newspaper Theme',
-    desc:'Playfair Display 900 + Source Serif 4. Newsprint palette. Masthead with faux Vol/No dateline. Crossword grid borders. Italic pencil-written answers. "Filed by" byline on completion.',
-    tags:['theme'],sprint:'s7',created:75},
-  {id:genId(),col:'backlog',title:'Botanical Theme',
-    desc:'Cormorant Garamond + Lato. Soft greens/cream/terracotta. 8px radius organic edges. Vine progress bar. Fern-frond watermark SVG at 4% opacity. Berry dot blooms on completion.',
-    tags:['theme'],sprint:'s7',created:76},
-  {id:genId(),col:'backlog',title:'Brutalist Digital Theme',
-    desc:'Space Mono only. Black/white + pure blue/red. 4px borders, 0 radius. Instant hover inversion (no transition). ASCII progress bar. [SYS] header. Character count in filled cells.',
-    tags:['theme'],sprint:'s7',created:77},
-  {id:genId(),col:'backlog',title:'Theme Selector UI',
-    desc:'Settings screen or quick-toggle with theme previews (mini grid or color swatches). Live preview on hover. Persist to localStorage. Accessible via gear icon or keyboard shortcut.',
-    tags:['theme','ui'],sprint:'s7',created:78},
-  {id:genId(),col:'backlog',title:'Responsive Polish',
-    desc:'Test all screens at phone/tablet/desktop breakpoints. Touch-friendly cell inputs on mobile. Adjust grid cell sizing. Timer repositioning. Settings drawer vs modal by viewport.',
-    tags:['polish'],sprint:'s7',created:79},
-  {id:genId(),col:'backlog',title:'Settings Screen',
-    desc:'Difficulty mode (Casual/Standard/Expert), timer length (3/5/7 min), theme selector, hard letters toggle (Q/X/Z), sound toggle. All persisted to f5_settings in localStorage.',
-    tags:['ui'],sprint:'s7',created:80},
-  {id:genId(),col:'backlog',title:'Favicon',
-    desc:'Simple F5 mark as SVG favicon. Minimal, works at 16px and 32px. Matches the product identity.',
-    tags:['polish'],sprint:'s7',created:81},
+  // --- DONE: Post-Sprint Deploy & Polish ---
+  {id:genId(),col:'done',title:'Cloudflare Worker Proxy',
+    desc:'Secure API proxy at f5-proxy.f5family.workers.dev. Hides Anthropic API key server-side. Invite code auth, rate limiting (100/day/IP), CORS locked to GitHub Pages + localhost.',
+    tags:['infra'],sprint:'post',created:100},
+  {id:genId(),col:'done',title:'Usage Analytics Dashboard',
+    desc:'Worker tracks per-IP request counts in KV. GET /stats?code= returns HTML dashboard: unique players, total requests, daily breakdown, per-player table (IPs masked).',
+    tags:['infra','data'],sprint:'post',created:101},
+  {id:genId(),col:'done',title:'Dual Auth Mode',
+    desc:'Invite code (proxied) or own API key (direct browser-to-API). Setup screen shows invite form when proxy configured, API key form as fallback. Settings displays current auth mode.',
+    tags:['ui','infra'],sprint:'post',created:102},
+  {id:genId(),col:'done',title:'GitHub Pages Deploy',
+    desc:'Live at https://randomjword.github.io/f5/. Legacy mode, deploy from main branch. Fully static \u2014 no server needed.',
+    tags:['infra'],sprint:'post',created:103},
+  {id:genId(),col:'done',title:'5 Visual Themes',
+    desc:'Newspaper, Retro, Minimal, Library (default), Botanical. All WCAG AA compliant (16 contrast fixes). Removed Pop Art, Brutalist Digital, Neon Arcade.',
+    tags:['theme'],sprint:'post',created:104},
+  {id:genId(),col:'done',title:'WCAG AA Contrast Audit',
+    desc:'Systematic audit of all text contrasts across all 5 themes. 16 failures fixed. --f5-text-muted was the main offender. All themes now pass 4.5:1 for normal text, 3:1 for large.',
+    tags:['polish'],sprint:'post',created:105},
+  {id:genId(),col:'done',title:'Mobile UX Polish',
+    desc:'iOS Safari focus ring fix (removed programmatic focus), overflow fix (html+body), vertical spacing tightened, bottom prev/next nav bar replacing top dot indicators.',
+    tags:['ui','polish'],sprint:'post',created:106},
+  {id:genId(),col:'done',title:'Anti-Repetition System',
+    desc:'Categories avoid last 25 games, letters avoid last 3. Tracked at game creation via dedicated storage keys (not game history), so abandoned games also count.',
+    tags:['core'],sprint:'post',created:107},
+  {id:genId(),col:'done',title:'Knowledge Cutoff Handling',
+    desc:'Prompt instructs Claude to accept plausible unknowns. Wikipedia-informed re-validation: fetches summary for rejected answers and re-submits to Claude with context for proper re-ruling.',
+    tags:['ai'],sprint:'post',created:108},
+  {id:genId(),col:'done',title:'Prompt Tuning v2',
+    desc:'Spelling rule rewrite ("if you can identify intent, accept it"). Single-name surname detection (Willis case). Knowledge cutoff instruction. Appeal prompt upgraded.',
+    tags:['ai'],sprint:'post',created:109},
+  {id:genId(),col:'done',title:'Categories Expanded to 142',
+    desc:'120 \u2192 142 categories across 9 tags. All categories in standard pool (removed difficulty filter). Interactive picker tool for curation.',
+    tags:['data'],sprint:'post',created:110},
+
+  // --- BACKLOG ---
+  {id:genId(),col:'backlog',title:'Self-Scoring Fallback',
+    desc:'When API fails, show checkboxes for each cell so the player can self-score. Currently returns null and shows error.',
+    tags:['ui','ai'],sprint:'',created:200},
+  {id:genId(),col:'backlog',title:'Difficulty Selection',
+    desc:'Standard (no Q/X/Z) vs Expert (full alphabet). UI toggle on menu or settings screen.',
+    tags:['ui','core'],sprint:'',created:201},
+  {id:genId(),col:'backlog',title:'Game Duration Selection',
+    desc:'Allow 3/5/7 minute games. UI on menu screen. Default 5 minutes.',
+    tags:['ui','core'],sprint:'',created:202},
+  {id:genId(),col:'backlog',title:'Keyboard Shortcut Hints',
+    desc:'Show Tab/Enter/Arrow key hints somewhere accessible. Maybe a help overlay or tooltip.',
+    tags:['ui','polish'],sprint:'',created:203},
 
   // --- FUTURE ---
   {id:genId(),col:'future',title:'Daily Challenge Mode',
@@ -476,12 +484,8 @@ var DEFAULT_CARDS = [
   {id:genId(),col:'future',title:'Leaderboards',
     desc:'Daily, weekly, all-time. Global and friends-only. Score, fill rate, streak. Requires Supabase + auth.',
     tags:['ui','infra'],sprint:'',created:97},
-  {id:genId(),col:'future',title:'Accessibility Audit',
-    desc:'WCAG AA compliance. Screen reader testing for grid navigation. Keyboard-only play verification. ARIA labels on cells. Focus management. High-contrast theme variant.',
-    tags:['polish'],sprint:'',created:98},
-  {id:genId(),col:'future',title:'Deploy to GitHub Pages',
-    desc:'Git repo, push to main, enable Pages. Fully static \u2014 no server needed. Player\u2019s own API key in their browser.',
-    tags:['infra'],sprint:'',created:99},
+  // Accessibility Audit — largely done (WCAG AA contrast audit, keyboard nav, ARIA labels)
+  // Deploy to GitHub Pages — done (https://randomjword.github.io/f5/)
 ];
 
 var MAX_CARDS = 200;

@@ -106,16 +106,13 @@ function clearGameState() {
   remove('active_game');
 }
 
-// Recent selections (tracks even abandoned games)
-function getRecentCategories() {
-  return get('recent_categories', []);
+// Shuffle-bag cycle: tracks all categories used until pool is exhausted
+function getUsedCategoryCycle() {
+  return get('category_cycle', []);
 }
 
-function addRecentCategories(names) {
-  const recent = getRecentCategories();
-  recent.unshift(names);
-  if (recent.length > 25) recent.length = 25;
-  set('recent_categories', recent);
+function setUsedCategoryCycle(names) {
+  set('category_cycle', names);
 }
 
 function getRecentLetters() {
@@ -189,8 +186,8 @@ export {
   saveGameState,
   getGameState,
   clearGameState,
-  getRecentCategories,
-  addRecentCategories,
+  getUsedCategoryCycle,
+  setUsedCategoryCycle,
   getRecentLetters,
   addRecentLetters,
   getHistory,

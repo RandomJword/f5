@@ -21,23 +21,26 @@ function shuffle(arr) {
  */
 function selectCategories(difficulty = 'standard') {
   const pool = CATEGORIES;
-  const recentNames = new Set();
 
-  // Use dedicated recent-categories tracker (includes abandoned games)
-  const recentSets = storage.getRecentCategories();
-  for (const names of recentSets) {
-    names.forEach(name => recentNames.add(name));
+  // Shuffle-bag: exhaust all categories before any repeats.
+  // Track used categories in current cycle. Reset when pool runs dry.
+  const usedNames = new Set(storage.getUsedCategoryCycle());
+
+  // Available = categories not yet used this cycle
+  let available = pool.filter(c => !usedNames.has(c.name));
+
+  // If fewer than 5 available (can't fill a game), start a new cycle
+  if (available.length < 5) {
+    storage.setUsedCategoryCycle([]);
+    available = pool;
   }
 
-  // Prefer categories not used in last 3 games
-  const fresh = pool.filter(c => !recentNames.has(c.name));
-  const stale = pool.filter(c => recentNames.has(c.name));
-  const shuffled = [...shuffle(fresh), ...shuffle(stale)];
+  const shuffled = shuffle(available);
 
   const picked = [];
   const usedTags = new Set();
 
-  // First pass: one per tag
+  // First pass: one per tag for diversity
   for (const cat of shuffled) {
     if (picked.length >= 5) break;
     if (!usedTags.has(cat.tag)) {
@@ -46,7 +49,7 @@ function selectCategories(difficulty = 'standard') {
     }
   }
 
-  // Fill remaining from unused categories if needed
+  // Fill remaining if needed (relax tag constraint)
   if (picked.length < 5) {
     for (const cat of shuffled) {
       if (picked.length >= 5) break;
@@ -94,7 +97,10 @@ function newGame(options = {}) {
   const letters = selectLetters(letterMode);
 
   // Record selections immediately (even if game is abandoned)
-  storage.addRecentCategories(categories.map(c => c.name));
+  const catNames = categories.map(c => c.name);
+  const cycle = storage.getUsedCategoryCycle();
+  cycle.push(...catNames);
+  storage.setUsedCategoryCycle(cycle);
   storage.addRecentLetters([...letters]);
 
   // Empty 5x5 grid

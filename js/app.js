@@ -238,54 +238,53 @@ function startNewGame() {
 }
 
 async function onTimeUp() {
-  grid.lock();
-  activeGame.grid = grid.getAnswers();
-  activeGame.status = 'validating';
-
-  // Save state for crash recovery (ADR-011)
-  storage.saveGameState(activeGame);
-
-  showScreen('validating');
-
-  const results = await validate(
-    activeGame.grid,
-    activeGame.categories,
-    activeGame.letters
-  );
-
-  storage.clearGameState();
-
-  if (!results) {
-    // API failed — TODO: self-scoring fallback in future
-    activeGame.status = 'abandoned';
-    alert('Validation failed — could not reach the AI judge. Returning to menu.');
-    showScreen('menu');
-    return;
-  }
-
-  activeGame.status = 'scored';
-  activeGame.validationResults = results;
-  activeGame.score = calculateScore(results);
-
-  // Save for review from stats screen
-  storage.setLastGame(activeGame);
-
-  // Save to history
-  storage.addToHistory({
-    id: activeGame.id,
-    categories: activeGame.categories.map(c => c.name),
-    letters: activeGame.letters,
-    grid: activeGame.grid,
-    results,
-    score: activeGame.score,
-    date: Date.now(),
-  });
-
   try {
+    grid.lock();
+    activeGame.grid = grid.getAnswers();
+    activeGame.status = 'validating';
+
+    // Save state for crash recovery (ADR-011)
+    storage.saveGameState(activeGame);
+
+    showScreen('validating');
+
+    const results = await validate(
+      activeGame.grid,
+      activeGame.categories,
+      activeGame.letters
+    );
+
+    storage.clearGameState();
+
+    if (!results) {
+      activeGame.status = 'abandoned';
+      alert('Validation failed — could not reach the AI judge. Returning to menu.');
+      showScreen('menu');
+      return;
+    }
+
+    activeGame.status = 'scored';
+    activeGame.validationResults = results;
+    activeGame.score = calculateScore(results);
+
+    // Save for review from stats screen
+    storage.setLastGame(activeGame);
+
+    // Save to history
+    storage.addToHistory({
+      id: activeGame.id,
+      categories: activeGame.categories.map(c => c.name),
+      letters: activeGame.letters,
+      grid: activeGame.grid,
+      results,
+      score: activeGame.score,
+      date: Date.now(),
+    });
+
     showResults(activeGame);
   } catch (err) {
-    console.error('[F5] showResults error:', err);
-    alert('Error displaying results: ' + err.message);
+    console.error('[F5] onTimeUp error:', err);
+    alert('Error: ' + err.message);
     showScreen('menu');
   }
 }

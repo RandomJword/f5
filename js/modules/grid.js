@@ -174,15 +174,18 @@ function renderMobile() {
   nav.appendChild(nextBtn);
   gridEl.appendChild(nav);
 
-  // Swipe support
+  // Swipe support — only trigger if horizontal movement dominates vertical
   let touchStartX = 0;
+  let touchStartY = 0;
   cardsWrap.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
   }, { passive: true });
 
   cardsWrap.addEventListener('touchend', (e) => {
     const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 50) {
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       if (dx < 0) showCard(mobileIndex + 1);
       else showCard(mobileIndex - 1);
     }

@@ -408,11 +408,20 @@ body {
   pointer-events: none;
 }
 
-/* Results grid on mobile — vertical scroll */
+/* Results grid on mobile — horizontal scroll */
 @media (max-width: 600px) {
+  #screen-results .f5-grid-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-left: calc(-1 * var(--f5-space-md));
+    margin-right: calc(-1 * var(--f5-space-md));
+    padding: 0 var(--f5-space-md);
+  }
+
   #results-grid.f5-grid:not(.f5-grid--mobile) {
-    grid-template-columns: minmax(80px, 0.8fr) repeat(5, 1fr);
+    grid-template-columns: minmax(90px, auto) repeat(5, minmax(80px, 1fr));
     font-size: var(--f5-text-xs);
+    min-width: 520px;
   }
 
   #results-grid .f5-grid__category-header {

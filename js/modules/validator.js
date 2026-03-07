@@ -89,33 +89,7 @@ async function wikiLookup(query) {
   }
 }
 
-const SYSTEM_PROMPT_STRICT = `You are the judge for "Facts in Five."
-Rules:
-1. Answer must belong to the category. Interpret categories BROADLY — do NOT split hairs:
-   - A person who has EVER published written works counts as an "Author" — even if they are primarily known for something else. Newton (Principia Mathematica) = valid Author. Einstein = valid Author. Churchill = valid Author.
-   - "Mythological Figures" includes figures from ALL mythological and religious traditions worldwide: Greek, Roman, Norse, Hindu, Buddhist, Shinto, Egyptian, Judeo-Christian, Islamic, Indigenous, African, etc. Biblical figures ARE mythological figures.
-   - "Scientists" includes anyone who made significant contributions to any field of science.
-   - "Team Sports" includes ANY sport played by teams, even if also categorizable as something else. Polo, rowing, relay races, doubles tennis — all valid.
-   - CRITICAL: Do NOT reject because the answer is "primarily known as" something else. People and things belong to MULTIPLE categories. If the answer fits the category AT ALL, accept it.
-   - Apply this broad interpretation to ALL categories.
-2. The letter check depends on the category type:
-   - People (authors, scientists, athletes, etc.): the SURNAME determines the letter. Players may write first name, full name, or surname only. When a single name is given, ALWAYS check if it could be a valid surname — do NOT assume it is a first name. Example: "Tennessee Williams" is valid for W because surname "Williams" starts with W. "Einstein" and "Albert Einstein" are both valid for E. "Willis" is valid for W if there is a known person with surname Willis in the category (e.g., Kevin Willis in basketball).
-   - Titles (movies, books, songs, etc.): ignore leading articles "The", "A", "An". Example: "The Godfather" is valid for G.
-   - Geographic features (lakes, rivers, mountains, bays, capes, gulfs, etc.): IGNORE generic prefixes like "Lake", "River", "Mount", "Cape", "Bay", "Gulf", "Sea", "Ocean", "Isle". Use the proper name. Example: "Lake Erie" is valid for E (the lake's name is Erie). "Mount Everest" is valid for E. "River Thames" is valid for T.
-   - Places (cities, countries, states, etc.): use the first word. Example: "New York" is valid for N.
-   - Everything else: use the first letter of the answer.
-3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
-4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
-5. Proper names and full words required. Abbreviations like "JFK" or "USA" are not accepted — write "Kennedy" or "United States."
-6. Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi", "Tchaikovsky" for "Tchaikovskiy" — these are all valid because the intent is clear. The test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
-   CRITICAL: Use the CATEGORY as context for spelling interpretation. If an answer doesn't fit the category as written, check if a close spelling variant DOES fit. The category is the strongest clue for intent. Example: "Kawaii" under Islands is clearly "Kauai" (Hawaiian island) — accept it. "Koalla" under Animals is clearly "Koala" — accept it. Do NOT match the answer to an unrelated meaning when a category-relevant correction exists.
-7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
-8. When in doubt about whether someone/something is real, give the benefit of the doubt if the answer is plausible and specific.
-
-Respond with a JSON array only. No markdown fences. No extra text.
-Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
-
-const SYSTEM_PROMPT_LENIENT = `You are the judge for "Facts in Five."
+const SYSTEM_PROMPT = `You are the judge for "Facts in Five."
 Rules:
 1. Answer must belong to the category. Interpret categories BROADLY — do NOT split hairs:
    - A person who has EVER published written works counts as an "Author" — even if they are primarily known for something else. Newton (Principia Mathematica) = valid Author. Einstein = valid Author. Churchill = valid Author.
@@ -147,8 +121,8 @@ Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."
  * Returns a 5x5 array of { valid, explanation, canonical } objects.
  */
 async function validate(answers, categories, letters) {
-  const strictness = storage.getStrictness();
-  const systemPrompt = strictness === 'lenient' ? SYSTEM_PROMPT_LENIENT : SYSTEM_PROMPT_STRICT;
+  const strictness = 'lenient';
+  const systemPrompt = SYSTEM_PROMPT;
 
   // Build submission list (non-empty only) and check cache
   const toSubmit = [];
@@ -339,7 +313,7 @@ function parseResponse(text) {
  * Returns the new result, or null on failure.
  */
 async function appeal(category, letter, answer) {
-  const strictness = storage.getStrictness();
+  const strictness = 'lenient';
 
   const prompt = `You are the appeals judge for "Facts in Five." A player's answer was rejected by the first judge and they are appealing.
 
@@ -358,9 +332,7 @@ Rules for judging:
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
 - Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as context — if the answer doesn't fit as written but a close spelling variant does fit the category, accept it (e.g., "Kawaii" under Islands = "Kauai").
 - Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.
-${strictness === 'lenient'
-  ? '- Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.'
-  : '- Be fair but precise. Accept answers that genuinely fit the category and letter, even if unusual or obscure.'}
+- Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.
 
 The first judge may have been wrong. Consider carefully whether this answer legitimately belongs to the category and matches the required letter. Players sometimes have creative, obscure, but perfectly valid answers.
 

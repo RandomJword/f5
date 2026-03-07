@@ -60,18 +60,10 @@ function setTheme(theme) {
   set('theme', theme);
 }
 
-function getStrictness() {
-  return get('strictness', 'lenient');
-}
-
-function setStrictness(level) {
-  set('strictness', level);
-}
 
 function getSettings() {
   return get('settings', {
     theme: '',
-    strictness: 'lenient',
     difficulty: 'standard',
   });
 }
@@ -186,8 +178,6 @@ export {
   getAuthMode,
   getTheme,
   setTheme,
-  getStrictness,
-  setStrictness,
   getSettings,
   setSettings,
   getCachedResult,

@@ -308,16 +308,78 @@ function showResults(game, animate = true) {
     </div>
   `;
 
-  // Results grid
+  // Render both desktop grid and mobile cards (CSS toggles visibility)
+  renderResultsGrid(game, animate);
+  renderResultsCards(game);
+
+  showScreen('results');
+
+  // Desktop cell-by-cell reveal animation
+  if (animate) {
+    const resultsGrid = document.getElementById('results-grid');
+    const resultCells = resultsGrid.querySelectorAll('.f5-result-cell');
+    let runningScore = 0;
+    const revealOrder = [];
+
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const idx = r * 5 + c;
+        revealOrder.push({ cell: resultCells[idx], r, c });
+      }
+    }
+
+    revealOrder.forEach(({ cell, r, c }, i) => {
+      const delay = 120 * i;
+      const result = validationResults[r][c];
+      const answer = answers[r][c];
+
+      setTimeout(() => {
+        cell.style.opacity = '1';
+        cell.style.background = result.valid
+          ? 'rgba(45,106,45,0.15)'
+          : answer ? 'rgba(200,16,46,0.12)' : 'transparent';
+
+        setTimeout(() => {
+          cell.style.background = result.valid
+            ? 'rgba(45,106,45,0.08)'
+            : answer ? 'rgba(200,16,46,0.06)' : 'transparent';
+        }, 200);
+
+        if (result.valid) {
+          runningScore++;
+          totalEl.textContent = runningScore;
+        }
+
+        if (i === revealOrder.length - 1) {
+          setTimeout(() => {
+            animateScore(totalEl, score.total);
+            subtitleEl.textContent = `${score.validCount} of 25 correct — ${score.total} of ${score.max} points`;
+            breakdown.style.opacity = '1';
+            breakdown.style.transition = 'opacity 0.4s ease';
+          }, 300);
+        }
+      }, delay);
+    });
+
+    // Mobile: just animate the score (no cell reveal)
+    setTimeout(() => {
+      animateScore(totalEl, score.total);
+      subtitleEl.textContent = `${score.validCount} of 25 correct — ${score.total} of ${score.max} points`;
+      breakdown.style.opacity = '1';
+      breakdown.style.transition = 'opacity 0.4s ease';
+    }, 400);
+  }
+}
+
+function renderResultsGrid(game, animate) {
+  const { score, validationResults, categories, letters, grid: answers } = game;
   const resultsGrid = document.getElementById('results-grid');
   resultsGrid.innerHTML = '';
 
-  // Corner
   const corner = document.createElement('div');
   corner.className = 'f5-grid__corner';
   resultsGrid.appendChild(corner);
 
-  // Letter headers with column scores
   letters.forEach((letter, c) => {
     const header = document.createElement('div');
     header.className = 'f5-grid__letter-header';
@@ -325,9 +387,7 @@ function showResults(game, animate = true) {
     resultsGrid.appendChild(header);
   });
 
-  // Rows
   categories.forEach((cat, r) => {
-    // Category header with row score
     const catHeader = document.createElement('div');
     catHeader.className = 'f5-grid__category-header';
     catHeader.innerHTML = `
@@ -337,10 +397,8 @@ function showResults(game, animate = true) {
       </div>`;
     resultsGrid.appendChild(catHeader);
 
-    // Track rejected cells for explanation rows below
     const rejectedCells = [];
 
-    // Cells
     letters.forEach((letter, c) => {
       const result = validationResults[r][c];
       const answer = answers[r][c];
@@ -354,7 +412,6 @@ function showResults(game, animate = true) {
       cell.style.justifyContent = 'center';
       cell.style.transition = 'background 0.3s ease, opacity 0.3s ease';
 
-      // Start hidden if animating
       if (animate && !result.appealed) {
         cell.style.opacity = '0';
         cell.style.background = 'var(--f5-grid-cell-bg)';
@@ -379,7 +436,6 @@ function showResults(game, animate = true) {
         badge.textContent = result.canonical || 'Valid';
       } else if (answer) {
         badge.style.color = 'var(--f5-invalid)';
-        // Short label in cell — full explanation goes in spanning row below
         badge.textContent = result.appealed ? 'Appeal denied' : 'Invalid';
       } else {
         badge.style.color = 'var(--f5-text-muted)';
@@ -389,7 +445,6 @@ function showResults(game, animate = true) {
       cell.appendChild(answerEl);
       cell.appendChild(badge);
 
-      // Appeal button for rejected non-empty cells
       if (!result.valid && answer && !result.appealed) {
         const appealBtn = document.createElement('button');
         appealBtn.textContent = 'Appeal';
@@ -407,7 +462,6 @@ function showResults(game, animate = true) {
         appealBtn.addEventListener('click', async () => {
           appealBtn.disabled = true;
           appealBtn.textContent = 'Reviewing...';
-
           const newResult = await appeal(cat.name, letter, answer);
           if (newResult) {
             game.validationResults[r][c] = newResult;
@@ -422,7 +476,6 @@ function showResults(game, animate = true) {
         cell.appendChild(appealBtn);
       }
 
-      // Show appeal outcome label (short — no explanation text)
       if (result.appealed && result.valid) {
         const overturnedEl = document.createElement('div');
         overturnedEl.style.fontSize = 'var(--f5-text-xs)';
@@ -432,17 +485,14 @@ function showResults(game, animate = true) {
         cell.appendChild(overturnedEl);
       }
 
-      // Collect all rejected cells with explanations for spanning rows
       if (!result.valid && answer && result.explanation) {
-        rejectedCells.push({ letter, answer, explanation: result.explanation, col: c, appealed: !!result.appealed });
+        rejectedCells.push({ letter, answer, explanation: result.explanation });
       }
 
       resultsGrid.appendChild(cell);
     });
 
-    // Insert explanation rows for rejected cells (span all 5 letter columns)
     for (const da of rejectedCells) {
-      // Empty spacer in column 1 (category label column)
       const spacer = document.createElement('div');
       spacer.style.cssText = `
         background: var(--f5-grid-header-bg);
@@ -451,7 +501,6 @@ function showResults(game, animate = true) {
       `;
       resultsGrid.appendChild(spacer);
 
-      // Explanation spanning columns 2–6
       const explRow = document.createElement('div');
       explRow.style.cssText = `
         grid-column: span 5;
@@ -467,60 +516,132 @@ function showResults(game, animate = true) {
       resultsGrid.appendChild(explRow);
     }
   });
+}
 
-  showScreen('results');
+function renderResultsCards(game) {
+  const { score, validationResults, categories, letters, grid: answers } = game;
+  const container = document.getElementById('results-cards');
+  container.innerHTML = '';
 
-  // Cell-by-cell reveal animation
-  if (animate) {
-    const resultCells = resultsGrid.querySelectorAll('.f5-result-cell');
-    let runningScore = 0;
-    const revealOrder = [];
+  categories.forEach((cat, r) => {
+    const card = document.createElement('div');
+    card.className = 'f5-results-card';
 
-    // Build reveal order: row by row, left to right
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const idx = r * 5 + c;
-        revealOrder.push({ cell: resultCells[idx], r, c });
-      }
-    }
+    const header = document.createElement('div');
+    header.className = 'f5-results-card__header';
+    header.innerHTML = `
+      <div class="f5-results-card__category">${escapeHtml(cat.name)}</div>
+      <div class="f5-results-card__score">${score.rowTotals[r]}×${score.rowTotals[r]} = ${score.rowScores[r]}</div>
+    `;
+    card.appendChild(header);
 
-    revealOrder.forEach(({ cell, r, c }, i) => {
-      const delay = 120 * i;
+    letters.forEach((letter, c) => {
       const result = validationResults[r][c];
       const answer = answers[r][c];
 
-      setTimeout(() => {
-        cell.style.opacity = '1';
-        cell.style.background = result.valid
-          ? 'rgba(45,106,45,0.15)'
-          : answer ? 'rgba(200,16,46,0.12)' : 'transparent';
+      const row = document.createElement('div');
+      row.className = 'f5-results-card__row';
+      if (!answer) row.classList.add('f5-results-card__row--empty');
+      else if (result.valid) row.classList.add('f5-results-card__row--valid');
+      else row.classList.add('f5-results-card__row--invalid');
 
-        // Flash then settle
-        setTimeout(() => {
-          cell.style.background = result.valid
-            ? 'rgba(45,106,45,0.08)'
-            : answer ? 'rgba(200,16,46,0.06)' : 'transparent';
-        }, 200);
+      // Letter badge
+      const letterEl = document.createElement('div');
+      letterEl.className = 'f5-results-card__letter';
+      letterEl.textContent = letter;
+      row.appendChild(letterEl);
 
-        // Count up score as valid cells are revealed
+      // Content
+      const content = document.createElement('div');
+      content.className = 'f5-results-card__content';
+
+      const answerEl = document.createElement('div');
+      answerEl.className = 'f5-results-card__answer';
+      answerEl.textContent = answer || '\u2014';
+      content.appendChild(answerEl);
+
+      const status = document.createElement('div');
+      status.className = 'f5-results-card__status';
+      if (result.valid) {
+        status.style.color = 'var(--f5-valid)';
+        if (result.appealed) {
+          status.textContent = result.canonical ? `${result.canonical} \u2014 Overturned on appeal` : 'Overturned on appeal';
+        } else {
+          status.textContent = result.canonical || 'Valid';
+        }
+      } else if (answer) {
+        status.style.color = 'var(--f5-invalid)';
+        status.textContent = result.appealed ? 'Appeal denied' : 'Invalid';
+      } else {
+        status.style.color = 'var(--f5-text-muted)';
+        status.textContent = 'Empty';
+      }
+      content.appendChild(status);
+
+      // Explanation for rejected answers (including appeal denied)
+      if (!result.valid && answer && result.explanation) {
+        const expl = document.createElement('div');
+        expl.className = 'f5-results-card__explanation';
+        expl.textContent = result.explanation;
+        content.appendChild(expl);
+      }
+
+      // Appeal button
+      if (!result.valid && answer && !result.appealed) {
+        const appealBtn = document.createElement('button');
+        appealBtn.textContent = 'Appeal';
+        appealBtn.style.cssText = `
+          font-size: var(--f5-text-xs);
+          color: var(--f5-accent);
+          background: none;
+          border: 1px solid var(--f5-accent);
+          border-radius: var(--f5-radius-sm);
+          padding: 2px 10px;
+          margin-top: var(--f5-space-xs);
+          cursor: pointer;
+          font-family: var(--f5-font-ui);
+        `;
+        appealBtn.addEventListener('click', async () => {
+          appealBtn.disabled = true;
+          appealBtn.textContent = 'Reviewing...';
+          const newResult = await appeal(cat.name, letter, answer);
+          if (newResult) {
+            game.validationResults[r][c] = newResult;
+            game.score = calculateScore(game.validationResults);
+            storage.setLastGame(game);
+            showResults(game, false);
+          } else {
+            appealBtn.textContent = 'Error — retry';
+            appealBtn.disabled = false;
+          }
+        });
+        content.appendChild(appealBtn);
+      }
+
+      row.appendChild(content);
+
+      // Checkmark / X icon
+      const icon = document.createElement('div');
+      icon.className = 'f5-results-card__icon';
+      if (answer) {
+        const circle = document.createElement('div');
+        circle.className = 'f5-results-card__icon-circle';
         if (result.valid) {
-          runningScore++;
-          // Simple running count display (final n² score shown at end)
-          totalEl.textContent = runningScore;
+          circle.classList.add('f5-results-card__icon-circle--valid');
+          circle.textContent = '\u2713';
+        } else {
+          circle.classList.add('f5-results-card__icon-circle--invalid');
+          circle.textContent = '\u2717';
         }
+        icon.appendChild(circle);
+      }
+      row.appendChild(icon);
 
-        // After last cell, show final score
-        if (i === revealOrder.length - 1) {
-          setTimeout(() => {
-            animateScore(totalEl, score.total);
-            subtitleEl.textContent = `${score.validCount} of 25 correct — ${score.total} of ${score.max} points`;
-            breakdown.style.opacity = '1';
-            breakdown.style.transition = 'opacity 0.4s ease';
-          }, 300);
-        }
-      }, delay);
+      card.appendChild(row);
     });
-  }
+
+    container.appendChild(card);
+  });
 }
 
 function escapeHtml(str) {

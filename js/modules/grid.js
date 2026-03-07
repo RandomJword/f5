@@ -67,6 +67,7 @@ function renderDesktop() {
       input.maxLength = 60;
       input.rows = 1;
       input.setAttribute('aria-label', `${cat.name} starting with ${letter}`);
+      input.setAttribute('autocomplete', 'f5-answer');
       input.dataset.row = r;
       input.dataset.col = c;
 
@@ -125,7 +126,7 @@ function renderMobile() {
       input.setAttribute('aria-label', `${cat.name} starting with ${letter}`);
       input.dataset.row = r;
       input.dataset.col = c;
-      input.autocomplete = 'off';
+      input.autocomplete = 'f5-answer';
       input.autocapitalize = 'words';
 
       input.addEventListener('keydown', (e) => handleMobileKeyNav(e, r, c));

@@ -225,9 +225,18 @@
 /* ============================================================
    STATS
    ============================================================ */
+.f5-stat-hero {
+  text-align: center;
+  padding: var(--f5-space-xl) var(--f5-space-md);
+}
+
+.f5-stat-hero .f5-stat-value {
+  font-size: var(--f5-text-3xl);
+}
+
 .f5-stats-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--f5-space-md);
 }
 
@@ -308,11 +317,6 @@
   padding: var(--f5-space-sm) var(--f5-space-md);
 }
 
-@media (max-width: 600px) {
-  .f5-stats-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
 /* ============================================================
    VISUALLY HIDDEN (a11y)

@@ -37,8 +37,6 @@ function init() {
   // Setup screen: show invite code form if proxy is configured
   initSetupForms();
 
-  // Update settings auth display
-  updateAuthDisplay();
 
   // Route to appropriate screen
   const authMode = storage.getAuthMode();
@@ -59,6 +57,12 @@ function showScreen(screenId) {
     }
   });
   currentScreen = screenId;
+
+  // Hide kebab menu on settings screen (already there)
+  const headerSettings = document.getElementById('btn-header-settings');
+  if (headerSettings) {
+    headerSettings.style.display = screenId === 'settings' ? 'none' : '';
+  }
 }
 
 function initSetupForms() {
@@ -93,7 +97,7 @@ function initSetupForms() {
     if (code) {
       storage.setInviteCode(code);
       storage.setApiKey(''); // clear any old API key
-      updateAuthDisplay();
+    
       showScreen('menu');
     }
   });
@@ -105,33 +109,12 @@ function initSetupForms() {
     if (key) {
       storage.setApiKey(key);
       storage.setInviteCode(''); // clear any old invite code
-      updateAuthDisplay();
+    
       showScreen('menu');
     }
   });
 }
 
-function updateAuthDisplay() {
-  const label = document.getElementById('auth-mode-label');
-  const display = document.getElementById('auth-display');
-  const clearBtn = document.getElementById('btn-clear-auth');
-
-  const mode = storage.getAuthMode();
-  if (mode === 'invite') {
-    label.textContent = 'Invite Code';
-    display.textContent = 'Playing with invite code';
-    clearBtn.textContent = 'Remove Invite Code';
-  } else if (mode === 'apikey') {
-    const key = storage.getApiKey();
-    label.textContent = 'API Key';
-    display.textContent = key ? key.slice(0, 7) + '...' + key.slice(-4) : 'No key set';
-    clearBtn.textContent = 'Remove API Key';
-  } else {
-    label.textContent = 'Authentication';
-    display.textContent = 'Not configured';
-    clearBtn.textContent = 'Sign Out';
-  }
-}
 
 function bindGlobalEvents() {
 
@@ -171,15 +154,6 @@ function bindGlobalEvents() {
     });
   }
 
-  // Settings — strictness
-  const strictnessSelect = document.getElementById('strictness-select');
-  if (strictnessSelect) {
-    strictnessSelect.value = storage.getStrictness();
-    strictnessSelect.addEventListener('change', (e) => {
-      storage.setStrictness(e.target.value);
-    });
-  }
-
   // Back buttons
   document.querySelectorAll('[data-navigate]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -205,16 +179,6 @@ function bindGlobalEvents() {
     });
   }
 
-  // Settings — clear auth (API key or invite code)
-  const clearAuthBtn = document.getElementById('btn-clear-auth');
-  if (clearAuthBtn) {
-    clearAuthBtn.addEventListener('click', () => {
-      storage.setApiKey('');
-      storage.setInviteCode('');
-      updateAuthDisplay();
-      showScreen('setup');
-    });
-  }
 }
 
 function populateThemeSelect(select) {
@@ -353,7 +317,7 @@ function showResults(game, animate = true) {
   letters.forEach((letter, c) => {
     const header = document.createElement('div');
     header.className = 'f5-grid__letter-header';
-    header.innerHTML = `${letter}<br><span style="font-size:var(--f5-text-xs);color:var(--f5-text-muted)">${score.colTotals[c]}/5 = ${score.colScores[c]}</span>`;
+    header.innerHTML = `${letter}<br><span style="font-size:var(--f5-text-xs);color:var(--f5-text-muted)">${score.colTotals[c]}×${score.colTotals[c]} = ${score.colScores[c]}</span>`;
     resultsGrid.appendChild(header);
   });
 
@@ -365,7 +329,7 @@ function showResults(game, animate = true) {
     catHeader.innerHTML = `
       <div>
         <div>${cat.name}</div>
-        <div style="font-size:var(--f5-text-xs);color:var(--f5-text-muted)">${score.rowTotals[r]}/5 = ${score.rowScores[r]}</div>
+        <div style="font-size:var(--f5-text-xs);color:var(--f5-text-muted)">${score.rowTotals[r]}×${score.rowTotals[r]} = ${score.rowScores[r]}</div>
       </div>`;
     resultsGrid.appendChild(catHeader);
 
@@ -584,16 +548,12 @@ function renderStats() {
     return;
   }
 
-  // Summary cards
-  let html = `<div class="f5-stats-cards">
-    <div class="f5-card f5-stat-card">
-      <div class="f5-stat-value">${stats.totalGames}</div>
-      <div class="f5-stat-label">Games</div>
-    </div>
-    <div class="f5-card f5-stat-card">
+  // Hero high score
+  let html = `<div class="f5-card f5-stat-card f5-stat-hero">
       <div class="f5-stat-value">${stats.bestScore}</div>
-      <div class="f5-stat-label">Best</div>
+      <div class="f5-stat-label">High Score</div>
     </div>
+    <div class="f5-stats-cards" style="margin-top: var(--f5-space-md);">
     <div class="f5-card f5-stat-card">
       <div class="f5-stat-value">${stats.avgScore}</div>
       <div class="f5-stat-label">Average</div>

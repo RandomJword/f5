@@ -262,11 +262,23 @@ body {
   }
 
   .f5-results {
-    padding: var(--f5-space-lg) 0;
+    padding: var(--f5-space-xl) 0 var(--f5-space-md);
   }
 
   .f5-results__score {
-    font-size: var(--f5-text-2xl);
+    font-size: var(--f5-text-3xl);
+    margin-bottom: var(--f5-space-sm);
+  }
+
+  .f5-results__breakdown {
+    gap: var(--f5-space-sm);
+    margin: var(--f5-space-md) 0;
+  }
+
+  #screen-results .f5-btn--large,
+  #screen-results .f5-btn--outline {
+    flex: 1;
+    padding: var(--f5-space-md) var(--f5-space-md);
   }
 }
 

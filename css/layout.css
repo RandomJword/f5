@@ -17,8 +17,7 @@ body {
   width: 100%;
   max-width: var(--f5-max-width);
   margin: 0 auto;
-  padding: var(--f5-space-lg) var(--f5-space-lg);
-  min-height: 100vh;
+  padding: var(--f5-space-md) var(--f5-space-lg) var(--f5-space-lg);
 }
 
 .screen.active {
@@ -31,6 +30,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-height: calc(100vh - var(--f5-header-height) - var(--f5-space-lg));
 }
 
 @media (max-width: 600px) {
@@ -72,7 +72,7 @@ body {
    ============================================================ */
 .f5-grid-container {
   width: 100%;
-  margin: var(--f5-space-xl) 0;
+  margin: var(--f5-space-md) 0;
 }
 
 .f5-grid {
@@ -176,7 +176,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--f5-space-md);
-  margin-bottom: var(--f5-space-lg);
+  margin-bottom: var(--f5-space-sm);
 }
 
 .f5-timer__digits {
@@ -222,21 +222,21 @@ body {
    ============================================================ */
 .f5-results {
   text-align: center;
-  padding: var(--f5-space-2xl) 0;
+  padding: var(--f5-space-md) 0 var(--f5-space-sm);
 }
 
 .f5-results__score {
   font-family: var(--f5-font-heading);
   font-weight: var(--f5-weight-black);
   font-size: var(--f5-text-3xl);
-  margin-bottom: var(--f5-space-sm);
+  margin-bottom: var(--f5-space-xs);
 }
 
 .f5-results__breakdown {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--f5-space-md);
-  margin: var(--f5-space-xl) 0;
+  margin: var(--f5-space-sm) 0;
   text-align: center;
 }
 

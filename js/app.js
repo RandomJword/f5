@@ -59,12 +59,6 @@ function showScreen(screenId) {
     }
   });
   currentScreen = screenId;
-
-  // Announce screen change to assistive tech
-  const heading = document.querySelector(`#screen-${screenId} h1, #screen-${screenId} h2, #screen-${screenId} .f5-screen-title`);
-  if (heading) {
-    heading.focus();
-  }
 }
 
 function initSetupForms() {

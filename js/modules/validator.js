@@ -1,5 +1,5 @@
 // F5 Validator — prompt builder, cache, JSON parser
-// Sends non-empty answers to Claude for validation. Caches results per strictness level.
+// Sends non-empty answers to Claude for validation. Caches results.
 
 import * as api from './claude-api.js';
 import * as storage from './storage.js';

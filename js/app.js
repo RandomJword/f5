@@ -58,7 +58,7 @@ function showScreen(screenId) {
   });
   currentScreen = screenId;
 
-  // Hide kebab menu on settings screen (already there)
+  // Hide kebab menu on settings screen
   const headerSettings = document.getElementById('btn-header-settings');
   if (headerSettings) {
     headerSettings.style.display = screenId === 'settings' ? 'none' : '';
@@ -97,7 +97,6 @@ function initSetupForms() {
     if (code) {
       storage.setInviteCode(code);
       storage.setApiKey(''); // clear any old API key
-    
       showScreen('menu');
     }
   });
@@ -109,7 +108,6 @@ function initSetupForms() {
     if (key) {
       storage.setApiKey(key);
       storage.setInviteCode(''); // clear any old invite code
-    
       showScreen('menu');
     }
   });
@@ -411,6 +409,7 @@ function showResults(game, animate = true) {
           if (newResult) {
             game.validationResults[r][c] = newResult;
             game.score = calculateScore(game.validationResults);
+            storage.setLastGame(game);
             showResults(game, false);
           } else {
             appealBtn.textContent = 'Error — retry';

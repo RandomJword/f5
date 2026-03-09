@@ -43,8 +43,10 @@ async function wikiCheck(query) {
  * Fetch a Wikipedia summary for an answer.
  * Returns { found, title, extract } or { found: false }.
  * Tries direct page lookup first, then search.
+ * Optional categoryHint adds context to search queries (e.g., "mountain")
+ * to disambiguate common words that have multiple meanings.
  */
-async function wikiLookup(query) {
+async function wikiLookup(query, categoryHint) {
   try {
     // Strip parentheticals the player may have added
     const clean = query.replace(/\s*\(.*?\)\s*$/, '').trim();
@@ -57,11 +59,25 @@ async function wikiLookup(query) {
     );
     if (res.ok) {
       const data = await res.json();
+      // If we got a result and have a category hint, check if it's relevant.
+      // If the direct result doesn't seem related, also try a category-qualified search.
+      if (categoryHint) {
+        const contextResult = await wikiSearchWithContext(clean, categoryHint);
+        if (contextResult.found) {
+          // Return the context-aware result — more likely to be category-relevant
+          return contextResult;
+        }
+      }
       return { found: true, title: data.title, extract: data.extract || '' };
     }
 
-    // Try search fallback
+    // Try search fallback — with category context if available
     if (res.status === 404) {
+      if (categoryHint) {
+        const contextResult = await wikiSearchWithContext(clean, categoryHint);
+        if (contextResult.found) return contextResult;
+      }
+
       const searchRes = await fetch(
         `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encoded}&srlimit=1&format=json&origin=*`
       );
@@ -69,7 +85,6 @@ async function wikiLookup(query) {
         const data = await searchRes.json();
         if (data.query.search.length > 0) {
           const title = data.query.search[0].title;
-          // Fetch summary for the search result
           const summaryRes = await fetch(
             `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
             { headers: { 'Api-User-Agent': 'F5Game/1.0' } }
@@ -83,6 +98,37 @@ async function wikiLookup(query) {
       }
     }
 
+    return { found: false };
+  } catch {
+    return { found: false };
+  }
+}
+
+/**
+ * Search Wikipedia with category context to find the right disambiguation.
+ * E.g., "Geiger" + "Mountains" → search "Geiger mountain" → finds Großer Geiger.
+ */
+async function wikiSearchWithContext(answer, category) {
+  try {
+    const contextQuery = `${answer} ${category}`;
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(contextQuery)}&srlimit=1&format=json&origin=*`
+    );
+    if (searchRes.ok) {
+      const data = await searchRes.json();
+      if (data.query.search.length > 0) {
+        const title = data.query.search[0].title;
+        const summaryRes = await fetch(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+          { headers: { 'Api-User-Agent': 'F5Game/1.0' } }
+        );
+        if (summaryRes.ok) {
+          const summaryData = await summaryRes.json();
+          return { found: true, title: summaryData.title, extract: summaryData.extract || '' };
+        }
+        return { found: true, title, extract: '' };
+      }
+    }
     return { found: false };
   } catch {
     return { found: false };
@@ -114,8 +160,12 @@ Rules:
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
 4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
 5. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
-6. Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi", "Tchaikovsky" for "Tchaikovskiy" — these are all valid because the intent is clear. The test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling.
-   CRITICAL: Use the CATEGORY as context for spelling interpretation. If an answer doesn't fit the category as written, check if a close spelling variant DOES fit. The category is the strongest clue for intent. Example: "Kawaii" under Islands is clearly "Kauai" (Hawaiian island) — accept it. "Koalla" under Animals is clearly "Koala" — accept it. Do NOT match the answer to an unrelated meaning when a category-relevant correction exists.
+6. Spelling: ALWAYS attempt spelling correction BEFORE judging validity. If a close spelling variant fits the category, treat the answer AS the corrected word and accept it. This is non-negotiable.
+   - The test is NOT "is this spelled correctly?" — it is "can I figure out what the player meant?"
+   - If yes → accept it and set "canonical" to the correct spelling.
+   - "Pokono" under Mountains → clearly "Pocono" → ACCEPT. "Flouride" under Chemical Elements → clearly "Fluoride" → ACCEPT. "Ghandi" → "Gandhi". "Tchaikovsky" → "Tchaikovskiy". "Reed" → "Reid". All valid.
+   - CRITICAL: Use the CATEGORY as the strongest context clue. "Kawaii" under Islands = "Kauai". "Koalla" under Animals = "Koala". Do NOT match to an unrelated meaning when a category-relevant correction exists.
+   - IMPORTANT: If you find yourself thinking "if the player intended X, I would accept it" — then ACCEPT IT AS X. That IS what they intended. A casual game player misspelling a word is not trying to submit a different answer; they just can't spell it. Give them the benefit of the doubt ALWAYS.
 7. Players may add parenthetical notes to disambiguate, e.g., "Larson (Far Side)" or "Newton (gravity)". IGNORE the parenthetical completely — do NOT use it as evidence for or against the answer. It is just a hint to help you identify who/what the player means.
 8. Be generous — if a reasonable person would accept the answer in a casual game, accept it.
 9. For creative/subjective categories (e.g., "Things That Are Round", "Things That Are Blue", "Excuses to Skip Work", "Things at a Hardware Store", "Things at a Grocery Store", "Things in a Junk Drawer"): be EXTREMELY loose. Almost any answer that a person could reasonably argue fits should be accepted. These categories are meant to be fun — there are no wrong answers if the connection is defensible at all. "Sadness" for "Things That Are Blue"? Accept it (blue = sad). "Air" for "Things That Are White"? Accept it. Be playful and generous.
@@ -125,7 +175,8 @@ Rules:
 13. When in doubt, accept it. The player is playing solo for fun.
 
 Respond with a JSON array only. No markdown fences. No extra text.
-Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}`;
+Each element: {"id":"rXcY","valid":boolean,"explanation":"...","canonical":"..."}
+ALWAYS set "canonical" to your best guess of the intended answer, even when rejecting. This helps with verification.`;
 
 /**
  * Validate all answers in a game grid.
@@ -235,7 +286,7 @@ async function validate(answers, categories, letters) {
     ? Promise.all(toVerify.map(v => wikiCheck(v.query)))
     : Promise.resolve([]);
   const rescueLookups = toRescue.length > 0
-    ? Promise.all(toRescue.map(v => wikiLookup(v.query)))
+    ? Promise.all(toRescue.map(v => wikiLookup(v.query, v.item.category)))
     : Promise.resolve([]);
 
   const [verifyResults, rescueResults] = await Promise.all([verifyChecks, rescueLookups]);
@@ -346,7 +397,7 @@ Rules for judging:
 - Do NOT reject because the person/thing is "primarily known as" something else. If it fits the category AT ALL, accept it.
 - However, the answer must actually BE the type of thing the category describes. A province is not a country. A lake is not an ocean. A city is not a state. Broad interpretation applies to borderline membership, NOT to fundamentally wrong types.
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
-- Spelling: If you can identify who or what the player means, ACCEPT IT. "Reed" for "Reid", "Ghandi" for "Gandhi" — the test is: can you identify the intended answer? If yes, it is valid. Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as context — if the answer doesn't fit as written but a close spelling variant does fit the category, accept it (e.g., "Kawaii" under Islands = "Kauai").
+- Spelling: ALWAYS attempt spelling correction BEFORE judging validity. If a close spelling variant fits the category, treat the answer AS the corrected word and accept it. "Pokono" under Mountains = "Pocono" = ACCEPT. "Flouride" under Chemical Elements = "Fluoride" = ACCEPT. "Ghandi" = "Gandhi". "Reed" = "Reid". Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as the strongest context clue — "Kawaii" under Islands = "Kauai". IMPORTANT: If you find yourself thinking "if the player intended X, I would accept it" — then ACCEPT IT AS X. That IS what they intended.
 - Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.
 - Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.
 - For creative/subjective categories ("Things That Are ___", "Things at a ___", "Excuses to ___", etc.): be EXTREMELY loose. Almost any defensible answer should be accepted. These are meant to be fun.

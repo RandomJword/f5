@@ -56,6 +56,13 @@
 - [x] **Mobile results: category cards** — scrollable card list replaces grid on <= 600px, filled circle check/X icons, inline explanations + appeal buttons
 - [x] **UX exploration mockups** — 4-agent team produced mockups for large screen, mobile input, mobile results (3 approaches), responsive type scale
 - [x] **Date-based cache busting** — v=20260307b format, visible version stamp in Settings
+- [x] **Sonnet fallback on 5xx** — claude-api.js auto-retries with Sonnet when Haiku returns 5xx (Anthropic outage recovery)
+- [x] **Province-not-country prompt fix** — "a province is not a country" rule in both validation and appeal prompts
+- [x] **Categories expanded to 297** — added humor tag (25 creative + slang), decade entertainment (60s-2000s movies/songs/artists), humor skips Wikipedia verification
+- [x] **Categories curated to 284** — trimmed niche categories, added geography (colleges, famous streets/buildings), arts (4 terminology categories), things (electronic equipment, crayon colors, occupations), humor (5 color variants, 3 store categories)
+- [x] **Stronger leniency for creative/slang/terminology** — dedicated prompt rules for humor, slang, terminology, and decade categories in both validation and appeal prompts
+- [x] **Sports team letter-matching rule** — use distinctive name, not city: mascot if real (Bears=B), city if suffix is generic (Manchester City=M), strip prefixes (Real Madrid=M), shared prefixes use city (Dynamo Kyiv=K). Rejection explanations teach the rule.
+- [x] **Category picker tool** — interactive HTML picker (category-picker.html) for browsing/selecting categories with tag sections, difficulty badges, JS output generation
 
 ## Backlog
 - [ ] Self-scoring fallback UI (when API fails)

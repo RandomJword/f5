@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309j';
-import * as storage from './storage.js?v=20260309j';
+import * as api from './claude-api.js?v=20260309k';
+import * as storage from './storage.js?v=20260309k';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([
@@ -342,6 +342,7 @@ async function validate(answers, categories, letters) {
     const wiki = rescueResults[i];
     if (wiki.found && wiki.extract) {
       rescueItems.push({ ...toRescue[i], wiki });
+      storage.addRescueStat('wiki');
     } else {
       wikiMissItems.push(toRescue[i]);
     }
@@ -352,24 +353,44 @@ async function validate(answers, categories, letters) {
     const ddgResults = await Promise.all(
       wikiMissItems.map(m => webSearchFallback(m.query, m.item.category))
     );
-    const stillMissing = [];
+    const ddgMissItems = [];
     for (let i = 0; i < wikiMissItems.length; i++) {
       const ddg = ddgResults[i];
       if (ddg.found && ddg.extract) {
         rescueItems.push({ ...wikiMissItems[i], wiki: ddg });
+        storage.addRescueStat('ddg');
         console.log('[F5 DDG] Found via DuckDuckGo:', wikiMissItems[i].query);
       } else {
-        stillMissing.push({
-          category: wikiMissItems[i].item.category,
-          letter: wikiMissItems[i].item.letter,
-          answer: wikiMissItems[i].item.answer,
-          query: wikiMissItems[i].query,
-        });
+        ddgMissItems.push(wikiMissItems[i]);
       }
     }
-    if (stillMissing.length > 0) {
-      console.warn('[F5 Search] No results from Wikipedia or DuckDuckGo:', stillMissing);
-      storage.addWikiMisses(stillMissing);
+
+    // Tier 3: Claude web search via proxy for DuckDuckGo misses
+    if (ddgMissItems.length > 0) {
+      const webResults = await Promise.all(
+        ddgMissItems.map(m => api.rescueSearch(m.item.answer, m.item.category, m.item.letter).catch(() => ({ found: false })))
+      );
+      const stillMissing = [];
+      for (let i = 0; i < ddgMissItems.length; i++) {
+        const web = webResults[i];
+        if (web.found && (web.extract || web.title)) {
+          rescueItems.push({ ...ddgMissItems[i], wiki: { found: true, title: web.title || ddgMissItems[i].query, extract: web.extract || '' } });
+          storage.addRescueStat('web');
+          console.log('[F5 Web] Found via Claude web search:', ddgMissItems[i].query);
+        } else {
+          storage.addRescueStat('miss');
+          stillMissing.push({
+            category: ddgMissItems[i].item.category,
+            letter: ddgMissItems[i].item.letter,
+            answer: ddgMissItems[i].item.answer,
+            query: ddgMissItems[i].query,
+          });
+        }
+      }
+      if (stillMissing.length > 0) {
+        console.warn('[F5 Search] No results from any source:', stillMissing);
+        storage.addWikiMisses(stillMissing);
+      }
     }
   }
 

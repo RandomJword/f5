@@ -3,7 +3,7 @@
 //   1. Direct browser-to-API (player's own key)
 //   2. Proxied via Cloudflare Worker (invite code, host's key)
 
-import * as storage from './storage.js?v=20260309j';
+import * as storage from './storage.js?v=20260309k';
 
 const DIRECT_API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
@@ -130,6 +130,33 @@ async function callProxy(systemPrompt, userMessage, maxTokens, model, inviteCode
   return data.content[0].text;
 }
 
+/**
+ * Web search rescue — ask proxy to verify an answer via Claude web search.
+ * Only works with invite code (proxy mode). Returns { found, title, extract }.
+ */
+async function rescueSearch(answer, category, letter) {
+  const inviteCode = storage.getInviteCode();
+  if (!inviteCode || !PROXY_URL) {
+    return { found: false, error: 'No proxy available' };
+  }
+
+  const res = await fetch(`${PROXY_URL}/rescue`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-invite-code': inviteCode,
+    },
+    body: JSON.stringify({ answer, category, letter }),
+  });
+
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { found: false, error: 'Non-JSON response' };
+  }
+}
+
 async function verifyInviteCode(code) {
   const res = await fetch(`${PROXY_URL}/verify`, {
     method: 'GET',
@@ -142,4 +169,4 @@ function hasProxy() {
   return !!PROXY_URL;
 }
 
-export { call, MODEL, APPEAL_MODEL, hasProxy, verifyInviteCode };
+export { call, MODEL, APPEAL_MODEL, hasProxy, verifyInviteCode, rescueSearch };

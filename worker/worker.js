@@ -8,7 +8,11 @@
 // KV namespace binding (see wrangler.toml):
 //   RATE_LIMIT        — stores per-IP request counters + usage analytics
 //
-// Usage stats: GET /stats?code=<INVITE_CODE>
+// Endpoints:
+//   POST /          — proxy Claude API calls
+//   POST /rescue    — web-search-assisted answer verification
+//   GET  /verify    — invite code check
+//   GET  /stats     — usage dashboard
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
@@ -50,6 +54,11 @@ export default {
         return jsonError('Invalid code', 401);
       }
       return getStats(env);
+    }
+
+    // POST /rescue — web search verification for answers
+    if (request.method === 'POST' && url.pathname === '/rescue') {
+      return handleRescue(request, env);
     }
 
     // Only POST for API proxy
@@ -142,6 +151,135 @@ export default {
   },
 };
 
+// --- Web Search Rescue ---
+
+async function handleRescue(request, env) {
+  const origin = request.headers.get('Origin') || '';
+  const allowed = getAllowedOrigins(env);
+  if (!allowed.includes('*') && !allowed.includes(origin)) {
+    return jsonError('Origin not allowed', 403);
+  }
+  const cors = corsHeaders(origin);
+
+  const inviteCode = request.headers.get('x-invite-code');
+  if (!inviteCode || inviteCode !== env.INVITE_CODE) {
+    return jsonError('Invalid invite code', 401, cors);
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const limitResult = await checkRateLimit(env, ip);
+  if (!limitResult.ok) {
+    return jsonError(limitResult.message, 429, { ...cors });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError('Invalid JSON body', 400, cors);
+  }
+
+  const { answer, category, letter } = body;
+  if (!answer || !category) {
+    return jsonError('Missing answer or category', 400, cors);
+  }
+
+  try {
+    const result = await webSearchVerify(env, answer, category, letter);
+
+    // Track the search
+    trackRescueSearch(env, ip, answer, category, result.found);
+    trackUsage(env, ip);
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', ...cors },
+    });
+  } catch (err) {
+    return jsonError(`Rescue search failed: ${err.message}`, 502, cors);
+  }
+}
+
+async function webSearchVerify(env, answer, category, letter) {
+  const res = await fetch(ANTHROPIC_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      temperature: 0,
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
+      messages: [{
+        role: 'user',
+        content: `Search the web to verify: Is "${answer}" a real, existing ${category.toLowerCase()}? I need factual verification only. Respond with JSON only, no markdown fences: {"found":true/false,"title":"official name","extract":"one sentence summary of what this is"}`,
+      }],
+    }),
+  });
+
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { found: false, error: 'Non-JSON response' };
+  }
+
+  if (!res.ok) {
+    return { found: false, error: data.error?.message || 'API error' };
+  }
+
+  // Count web searches used
+  const searchCount = data.usage?.server_tool_use?.web_search_requests || 0;
+
+  // Extract text blocks from response
+  const textBlocks = (data.content || []).filter(b => b.type === 'text');
+  const fullText = textBlocks.map(b => b.text).join('\n');
+
+  // Try to parse JSON from Claude's response
+  try {
+    const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        found: !!parsed.found,
+        title: parsed.title || answer,
+        extract: parsed.extract || '',
+        searchCount,
+      };
+    }
+  } catch {}
+
+  // Fallback: check if response mentions the answer exists
+  const lowerText = fullText.toLowerCase();
+  const found = lowerText.includes('yes') || lowerText.includes('is a real') || lowerText.includes('exists');
+  return { found, title: answer, extract: fullText.slice(0, 300), searchCount };
+}
+
+// --- Rescue Search Analytics ---
+
+async function trackRescueSearch(env, ip, answer, category, found) {
+  try {
+    const day = todayKey();
+    const key = `rescue:${day}`;
+    const data = await env.RATE_LIMIT.get(key, 'json') || { searches: 0, found: 0, missed: 0, items: [] };
+
+    data.searches++;
+    if (found) data.found++;
+    else data.missed++;
+    data.items.push({ answer, category, found, ip: ip.split('.').pop(), time: new Date().toISOString().slice(11, 19) });
+
+    // Keep last 50 items per day
+    if (data.items.length > 50) data.items = data.items.slice(-50);
+
+    await env.RATE_LIMIT.put(key, JSON.stringify(data), { expirationTtl: 90 * 86400 });
+  } catch {
+    // Analytics should never block requests
+  }
+}
+
 // --- Usage Analytics ---
 
 function todayKey() {
@@ -170,27 +308,40 @@ async function getStats(env) {
     const days = [];
     let totalRequests = 0;
     const allIps = {};
+    let totalRescueSearches = 0;
+    let totalRescueFound = 0;
+    let totalRescueMissed = 0;
+    const rescueDays = [];
+    const recentRescueItems = [];
 
     for (let i = 0; i < 30; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const day = d.toISOString().slice(0, 10);
-      const data = await env.RATE_LIMIT.get(`usage:${day}`, 'json');
 
+      const data = await env.RATE_LIMIT.get(`usage:${day}`, 'json');
       if (data) {
         const uniqueIps = Object.keys(data.ips).length;
         days.push({ date: day, requests: data.requests, uniquePlayers: uniqueIps });
         totalRequests += data.requests;
-
         for (const [ip, count] of Object.entries(data.ips)) {
           allIps[ip] = (allIps[ip] || 0) + count;
         }
       }
+
+      const rescue = await env.RATE_LIMIT.get(`rescue:${day}`, 'json');
+      if (rescue) {
+        rescueDays.push({ date: day, ...rescue });
+        totalRescueSearches += rescue.searches;
+        totalRescueFound += rescue.found;
+        totalRescueMissed += rescue.missed;
+        recentRescueItems.push(...(rescue.items || []));
+      }
     }
 
     const uniquePlayersAllTime = Object.keys(allIps).length;
+    const estimatedCost = (totalRescueSearches * 0.01).toFixed(2);
 
-    // Per-player summary (anonymized — show last octet only)
     const players = Object.entries(allIps)
       .map(([ip, count]) => ({ ip: '*.*.*.'+ip.split('.').pop(), requests: count }))
       .sort((a, b) => b.requests - a.requests);
@@ -199,24 +350,76 @@ async function getStats(env) {
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>F5 Usage Stats</title>
 <style>
-  body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background: #1E1209; color: #E8DCC8; }
+  body { font-family: system-ui; max-width: 700px; margin: 2rem auto; padding: 0 1rem; background: #1E1209; color: #E8DCC8; }
   h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; color: #B8860B; }
   .card { background: #2A1F14; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  .cards { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .cards .card { flex: 1; min-width: 120px; }
   .big { font-size: 2rem; font-weight: bold; color: #B8860B; }
+  .mid { font-size: 1.4rem; font-weight: bold; color: #B8860B; }
+  .green { color: #4a8; }
+  .red { color: #c44; }
+  .muted { color: #A8956E; font-size: 0.85rem; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #3A2A18; }
   th { color: #A8956E; font-size: 0.85rem; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; }
+  .badge-found { background: #1a3a1a; color: #4a8; }
+  .badge-miss { background: #3a1a1a; color: #c44; }
 </style></head><body>
-<h1>F5 Usage Dashboard</h1>
-<div class="card">
-  <div class="big">${uniquePlayersAllTime}</div>
-  <div>unique players (30 days)</div>
+<h1>F5 Dashboard</h1>
+
+<div class="cards">
+  <div class="card">
+    <div class="big">${uniquePlayersAllTime}</div>
+    <div>unique players (30d)</div>
+  </div>
+  <div class="card">
+    <div class="big">${totalRequests}</div>
+    <div>API requests (30d)</div>
+  </div>
 </div>
-<div class="card">
-  <div class="big">${totalRequests}</div>
-  <div>total API requests (30 days)</div>
+
+<h2>Web Search Rescue</h2>
+<div class="cards">
+  <div class="card">
+    <div class="mid">${totalRescueSearches}</div>
+    <div>searches (30d)</div>
+  </div>
+  <div class="card">
+    <div class="mid green">${totalRescueFound}</div>
+    <div>found</div>
+  </div>
+  <div class="card">
+    <div class="mid red">${totalRescueMissed}</div>
+    <div>missed</div>
+  </div>
+  <div class="card">
+    <div class="mid">$${estimatedCost}</div>
+    <div>est. cost</div>
+  </div>
 </div>
-<h2>Daily Breakdown</h2>
+
+${recentRescueItems.length > 0 ? `
+<h2>Recent Rescue Searches</h2>
+<table>
+  <tr><th>Answer</th><th>Category</th><th>Result</th><th>Time</th></tr>
+  ${recentRescueItems.slice(-20).reverse().map(r =>
+    `<tr><td>${esc(r.answer)}</td><td>${esc(r.category)}</td><td><span class="badge ${r.found ? 'badge-found' : 'badge-miss'}">${r.found ? 'Found' : 'Miss'}</span></td><td class="muted">${r.time || ''}</td></tr>`
+  ).join('')}
+</table>` : ''}
+
+${rescueDays.length > 0 ? `
+<h2>Rescue by Day</h2>
+<table>
+  <tr><th>Date</th><th>Searches</th><th>Found</th><th>Missed</th><th>Cost</th></tr>
+  ${rescueDays.map(d =>
+    `<tr><td>${d.date}</td><td>${d.searches}</td><td class="green">${d.found}</td><td class="red">${d.missed}</td><td>$${(d.searches * 0.01).toFixed(2)}</td></tr>`
+  ).join('')}
+</table>` : ''}
+
+<h2>API Requests by Day</h2>
 <table>
   <tr><th>Date</th><th>Requests</th><th>Players</th></tr>
   ${days.map(d => `<tr><td>${d.date}</td><td>${d.requests}</td><td>${d.uniquePlayers}</td></tr>`).join('')}
@@ -234,6 +437,10 @@ async function getStats(env) {
   } catch (err) {
     return jsonError('Failed to read stats: ' + err.message, 500);
   }
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // --- Rate Limiting ---

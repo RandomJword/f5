@@ -1,15 +1,15 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js?v=20260309j';
-import * as themeManager from './modules/theme-manager.js?v=20260309j';
-import * as grid from './modules/grid.js?v=20260309j';
-import { createTimer, formatTime } from './modules/timer.js?v=20260309j';
-import { newGame, calculateScore } from './modules/game-engine.js?v=20260309j';
-import { validate, appeal } from './modules/validator.js?v=20260309j';
-import { compute as computeStats } from './modules/stats.js?v=20260309j';
-import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309j';
-import { shareGame } from './modules/share.js?v=20260309j';
+import * as storage from './modules/storage.js?v=20260309k';
+import * as themeManager from './modules/theme-manager.js?v=20260309k';
+import * as grid from './modules/grid.js?v=20260309k';
+import { createTimer, formatTime } from './modules/timer.js?v=20260309k';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260309k';
+import { validate, appeal } from './modules/validator.js?v=20260309k';
+import { compute as computeStats } from './modules/stats.js?v=20260309k';
+import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309k';
+import { shareGame } from './modules/share.js?v=20260309k';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];
@@ -829,18 +829,26 @@ function renderStats() {
     }).join('')}
   </div>`;
 
-  // Wikipedia miss counter (dev insight — always visible)
+  // Search rescue diagnostics
+  const rescueStats = storage.getRescueStats();
+  const rescueTotal = rescueStats.wiki + rescueStats.ddg + rescueStats.web + rescueStats.miss;
   const wikiMisses = storage.getWikiMisses();
   html += `<div class="f5-card" style="margin-top: var(--f5-space-md);">
-    <div class="f5-stat-label" style="margin-bottom: var(--f5-space-sm);">Wikipedia Rescue Misses: ${wikiMisses.length}</div>
-    <div style="font-size: var(--f5-text-xs); color: var(--f5-text-muted); line-height: 1.6;">
-      ${wikiMisses.length === 0
-        ? 'No misses yet. Play a game to start tracking.'
-        : wikiMisses.slice(-10).reverse().map(m =>
-            `<div>${escapeHtml(m.answer)} → ${escapeHtml(m.category)} (${m.letter})</div>`
-          ).join('') + (wikiMisses.length > 10 ? `<div style="margin-top: var(--f5-space-xs);">...and ${wikiMisses.length - 10} more</div>` : '')
-      }
+    <div class="f5-stat-label" style="margin-bottom: var(--f5-space-sm);">Answer Rescue (${rescueTotal} total)</div>
+    <div style="font-size: var(--f5-text-xs); color: var(--f5-text-muted); line-height: 2;">
+      <div style="display: flex; justify-content: space-between;"><span>Wikipedia</span><span style="color: var(--f5-valid);">${rescueStats.wiki}</span></div>
+      <div style="display: flex; justify-content: space-between;"><span>DuckDuckGo</span><span style="color: var(--f5-valid);">${rescueStats.ddg}</span></div>
+      <div style="display: flex; justify-content: space-between;"><span>Web Search ($0.01/ea)</span><span style="color: var(--f5-accent);">${rescueStats.web}</span></div>
+      <div style="display: flex; justify-content: space-between;"><span>Unresolved</span><span style="color: var(--f5-invalid);">${rescueStats.miss}</span></div>
+      ${rescueStats.web > 0 ? `<div style="display: flex; justify-content: space-between; margin-top: var(--f5-space-xs); border-top: 1px solid var(--f5-border); padding-top: var(--f5-space-xs);"><span>Est. web search cost</span><span>$${(rescueStats.web * 0.01).toFixed(2)}</span></div>` : ''}
     </div>
+    ${wikiMisses.length > 0 ? `
+    <div style="margin-top: var(--f5-space-sm); font-size: var(--f5-text-xs); color: var(--f5-text-muted);">
+      <div style="font-weight: var(--f5-weight-bold); margin-bottom: 2px;">Recent misses:</div>
+      ${wikiMisses.slice(-5).reverse().map(m =>
+        `<div>${escapeHtml(m.answer)} → ${escapeHtml(m.category)}</div>`
+      ).join('')}
+    </div>` : ''}
   </div>`;
 
   container.innerHTML = html;

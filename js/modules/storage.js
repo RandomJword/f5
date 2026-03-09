@@ -167,6 +167,17 @@ function addWikiMisses(misses) {
   set('wiki_misses', all);
 }
 
+// Rescue tier tracking
+function getRescueStats() {
+  return get('rescue_stats', { wiki: 0, ddg: 0, web: 0, miss: 0 });
+}
+
+function addRescueStat(tier) {
+  const stats = getRescueStats();
+  stats[tier] = (stats[tier] || 0) + 1;
+  set('rescue_stats', stats);
+}
+
 // Storage size check
 function getUsageEstimate() {
   let total = 0;
@@ -215,4 +226,6 @@ export {
   getUsageEstimate,
   getWikiMisses,
   addWikiMisses,
+  getRescueStats,
+  addRescueStat,
 };

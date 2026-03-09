@@ -3,7 +3,7 @@
 //   1. Direct browser-to-API (player's own key)
 //   2. Proxied via Cloudflare Worker (invite code, host's key)
 
-import * as storage from './storage.js?v=20260309h';
+import * as storage from './storage.js?v=20260309i';
 
 const DIRECT_API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';

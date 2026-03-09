@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="css/layout.css?v=20260307a">
   <link rel="stylesheet" href="css/components.css?v=9">
 
-  <script type="module" src="js/app.js?v=20260307l"></script>
+  <script type="module" src="js/app.js?v=20260308a"></script>
 </head>
 <body>
 
@@ -54,8 +54,9 @@
             maxlength="50"
           >
           <p class="f5-form-hint">Got a code from whoever invited you? Enter it here to play for free.</p>
+          <p class="f5-form-error" id="invite-error" style="display: none; color: var(--f5-invalid); margin-top: var(--f5-space-xs); font-size: var(--f5-text-sm);">That code didn't work. Double-check it and try again.</p>
         </div>
-        <button type="submit" class="f5-btn f5-btn--large">Start Playing</button>
+        <button type="submit" class="f5-btn f5-btn--large" id="btn-invite-submit">Start Playing</button>
         <div style="text-align: center; margin-top: var(--f5-space-lg);">
           <button type="button" class="f5-btn--ghost" id="btn-show-apikey" style="font-size: var(--f5-text-sm);">Use your own API key instead</button>
         </div>
@@ -208,7 +209,7 @@
       </div>
     </div>
 
-    <div style="margin-top: var(--f5-space-xl); text-align: center; font-size: var(--f5-text-xs); color: var(--f5-text-muted);">v20260307l</div>
+    <div style="margin-top: var(--f5-space-xl); text-align: center; font-size: var(--f5-text-xs); color: var(--f5-text-muted);">v20260308a</div>
 
   </main>
 

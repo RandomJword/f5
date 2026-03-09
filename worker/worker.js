@@ -18,7 +18,7 @@ const ALLOWED_MODELS = [
   'claude-sonnet-4-6',
 ];
 const MAX_TOKENS_CAP = 4000;
-const MAX_REQUESTS_PER_DAY = 100;
+const MAX_REQUESTS_PER_DAY = 500;
 const RATE_WINDOW_SECONDS = 24 * 60 * 60;
 
 export default {
@@ -28,6 +28,19 @@ export default {
     // CORS preflight
     if (request.method === 'OPTIONS') {
       return handleCors(request, env);
+    }
+
+    // GET /verify — lightweight invite code check
+    if (request.method === 'GET' && url.pathname === '/verify') {
+      const origin = request.headers.get('Origin') || '';
+      const cors = corsHeaders(origin);
+      const code = request.headers.get('x-invite-code');
+      if (code && code === env.INVITE_CODE) {
+        return new Response(JSON.stringify({ valid: true }), {
+          headers: { 'Content-Type': 'application/json', ...cors },
+        });
+      }
+      return jsonError('Invalid invite code', 401, cors);
     }
 
     // GET /stats — usage dashboard

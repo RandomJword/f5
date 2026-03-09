@@ -1,14 +1,14 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js?v=20260307l';
-import * as themeManager from './modules/theme-manager.js?v=20260307l';
-import * as grid from './modules/grid.js?v=20260307l';
-import { createTimer, formatTime } from './modules/timer.js?v=20260307l';
-import { newGame, calculateScore } from './modules/game-engine.js?v=20260307l';
-import { validate, appeal } from './modules/validator.js?v=20260307l';
-import { compute as computeStats } from './modules/stats.js?v=20260307l';
-import { hasProxy } from './modules/claude-api.js?v=20260307l';
+import * as storage from './modules/storage.js?v=20260308a';
+import * as themeManager from './modules/theme-manager.js?v=20260308a';
+import * as grid from './modules/grid.js?v=20260308a';
+import { createTimer, formatTime } from './modules/timer.js?v=20260308a';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260308a';
+import { validate, appeal } from './modules/validator.js?v=20260308a';
+import { compute as computeStats } from './modules/stats.js?v=20260308a';
+import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260308a';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];
@@ -93,14 +93,35 @@ function initSetupForms() {
   }
   // If no proxy, API key form is already visible by default
 
-  // Invite code submission
-  inviteForm.addEventListener('submit', (e) => {
+  // Invite code submission — verify against proxy before accepting
+  inviteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const code = document.getElementById('invite-code-input').value.trim();
-    if (code) {
+    const errorEl = document.getElementById('invite-error');
+    const submitBtn = document.getElementById('btn-invite-submit');
+    if (!code) return;
+
+    errorEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Checking...';
+
+    try {
+      const valid = await verifyInviteCode(code);
+      if (valid) {
+        storage.setInviteCode(code);
+        storage.setApiKey(''); // clear any old API key
+        showScreen('menu');
+      } else {
+        errorEl.style.display = '';
+      }
+    } catch {
+      // Network error — accept the code optimistically (will fail at validation with a clearer state)
       storage.setInviteCode(code);
-      storage.setApiKey(''); // clear any old API key
+      storage.setApiKey('');
       showScreen('menu');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Start Playing';
     }
   });
 

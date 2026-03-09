@@ -118,8 +118,16 @@ async function callProxy(systemPrompt, userMessage, maxTokens, model, inviteCode
   return data.content[0].text;
 }
 
+async function verifyInviteCode(code) {
+  const res = await fetch(`${PROXY_URL}/verify`, {
+    method: 'GET',
+    headers: { 'x-invite-code': code },
+  });
+  return res.ok;
+}
+
 function hasProxy() {
   return !!PROXY_URL;
 }
 
-export { call, MODEL, APPEAL_MODEL, hasProxy };
+export { call, MODEL, APPEAL_MODEL, hasProxy, verifyInviteCode };

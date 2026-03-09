@@ -547,6 +547,17 @@ var DEFAULT_CARDS = [
     desc:'Strengthened spelling rules: judge must correct spelling BEFORE judging, cannot identify intent then reject. "Pokono"→"Pocono", "Flouride"→"Fluoride" now accepted. Category-aware Wikipedia search (e.g. "Geiger mountain") finds correct disambiguation instead of unrelated homonyms. Judge always sets canonical even on rejection.',
     tags:['ai'],sprint:'post',created:155},
 
+  // --- DONE: Share Feature (Mar 9) ---
+  {id:genId(),col:'done',title:'Share Results Image',
+    desc:'Canvas-rendered themed share image (J1-D "Generous + Surface Cards"). 720px PNG with score, category cards, letter dots (green/red/gray), difficulty label, "Play F5" CTA. Web Share API on mobile (image + text + URL), download fallback on desktop.',
+    tags:['ui','core'],sprint:'post',created:160},
+  {id:genId(),col:'done',title:'Difficulty in Game State',
+    desc:'difficulty field added to newGame() return object and addToHistory() call. Share image shows Easy vs Standard label.',
+    tags:['core'],sprint:'post',created:161},
+  {id:genId(),col:'done',title:'Review Last Game + Share',
+    desc:'Review Last Game now sets activeGame so Share button works from stats screen review flow.',
+    tags:['ui'],sprint:'post',created:162},
+
   // --- BACKLOG ---
   {id:genId(),col:'backlog',title:'Self-Scoring Fallback',
     desc:'When API fails, show checkboxes for each cell so the player can self-score. Currently returns null and shows error.',

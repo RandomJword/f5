@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309i';
-import * as storage from './storage.js?v=20260309i';
+import * as api from './claude-api.js?v=20260309j';
+import * as storage from './storage.js?v=20260309j';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([
@@ -127,6 +127,39 @@ async function wikiSearchWithContext(answer, category) {
           return { found: true, title: summaryData.title, extract: summaryData.extract || '' };
         }
         return { found: true, title, extract: '' };
+      }
+    }
+    return { found: false };
+  } catch {
+    return { found: false };
+  }
+}
+
+/**
+ * Fallback web search via DuckDuckGo when Wikipedia has no results.
+ * Tries the instant answer API first, then falls back to HTML search scraping.
+ * Returns { found, title, extract } or { found: false }.
+ */
+async function webSearchFallback(query, category) {
+  try {
+    // DuckDuckGo Instant Answer API (free, no auth)
+    const contextQuery = `${query} ${category}`;
+    const encoded = encodeURIComponent(contextQuery);
+    const res = await fetch(
+      `https://api.duckduckgo.com/?q=${encoded}&format=json&no_html=1&skip_disambig=1`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      // AbstractText is the main result summary
+      if (data.AbstractText) {
+        return { found: true, title: data.Heading || query, extract: data.AbstractText };
+      }
+      // Check related topics for a match
+      if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+        const topic = data.RelatedTopics[0];
+        if (topic.Text) {
+          return { found: true, title: topic.FirstURL || query, extract: topic.Text };
+        }
       }
     }
     return { found: false };
@@ -304,43 +337,57 @@ async function validate(answers, categories, letters) {
 
   // Process rescue: re-validate rejected answers with Wikipedia context
   const rescueItems = [];
-  const wikiMisses = [];
+  const wikiMissItems = [];
   for (let i = 0; i < toRescue.length; i++) {
     const wiki = rescueResults[i];
     if (wiki.found && wiki.extract) {
       rescueItems.push({ ...toRescue[i], wiki });
     } else {
-      // Wikipedia couldn't find it — track the miss
-      wikiMisses.push({
-        category: toRescue[i].item.category,
-        letter: toRescue[i].item.letter,
-        answer: toRescue[i].item.answer,
-        query: toRescue[i].query,
-      });
+      wikiMissItems.push(toRescue[i]);
     }
   }
 
-  // Log Wikipedia misses for monitoring
-  if (wikiMisses.length > 0) {
-    console.warn('[F5 Wiki] No Wikipedia result for:', wikiMisses);
-    storage.addWikiMisses(wikiMisses);
+  // Fallback: DuckDuckGo search for Wikipedia misses
+  if (wikiMissItems.length > 0) {
+    const ddgResults = await Promise.all(
+      wikiMissItems.map(m => webSearchFallback(m.query, m.item.category))
+    );
+    const stillMissing = [];
+    for (let i = 0; i < wikiMissItems.length; i++) {
+      const ddg = ddgResults[i];
+      if (ddg.found && ddg.extract) {
+        rescueItems.push({ ...wikiMissItems[i], wiki: ddg });
+        console.log('[F5 DDG] Found via DuckDuckGo:', wikiMissItems[i].query);
+      } else {
+        stillMissing.push({
+          category: wikiMissItems[i].item.category,
+          letter: wikiMissItems[i].item.letter,
+          answer: wikiMissItems[i].item.answer,
+          query: wikiMissItems[i].query,
+        });
+      }
+    }
+    if (stillMissing.length > 0) {
+      console.warn('[F5 Search] No results from Wikipedia or DuckDuckGo:', stillMissing);
+      storage.addWikiMisses(stillMissing);
+    }
   }
 
   if (rescueItems.length > 0) {
-    // Re-submit to Claude with Wikipedia context
+    // Re-submit to Claude with web context (Wikipedia or DuckDuckGo)
     const rescuePayload = rescueItems.map(r => ({
       id: r.item.id,
       category: r.item.category,
       letter: r.item.letter,
       answer: r.item.answer,
-      wikipedia_title: r.wiki.title,
-      wikipedia_extract: r.wiki.extract.slice(0, 300),
+      reference_title: r.wiki.title,
+      reference_extract: r.wiki.extract.slice(0, 300),
     }));
 
     try {
       const rescueText = await api.call(
         systemPrompt,
-        `Re-validate these previously rejected answers. Wikipedia has confirmed they exist. For each answer, a Wikipedia summary is provided. Use this information to judge category fit and letter match. Do NOT reject just because the answer was not in your training data.\n\n${JSON.stringify(rescuePayload)}`
+        `Re-validate these previously rejected answers. A web search has confirmed they exist. For each answer, a reference summary is provided. Use this information to judge category fit and letter match. Do NOT reject just because the answer was not in your training data.\n\n${JSON.stringify(rescuePayload)}`
       );
       const rescueApiResults = parseResponse(rescueText);
       const rescueMap = new Map();

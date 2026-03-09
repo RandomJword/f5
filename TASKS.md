@@ -63,6 +63,7 @@
 - [x] **Stronger leniency for creative/slang/terminology** — dedicated prompt rules for humor, slang, terminology, and decade categories in both validation and appeal prompts
 - [x] **Sports team letter-matching rule** — use distinctive name, not city: mascot if real (Bears=B), city if suffix is generic (Manchester City=M), strip prefixes (Real Madrid=M), shared prefixes use city (Dynamo Kyiv=K). Rejection explanations teach the rule.
 - [x] **Category picker tool** — interactive HTML picker (category-picker.html) for browsing/selecting categories with tag sections, difficulty badges, JS output generation
+- [x] **Spelling tolerance hardened** — judge must correct spelling BEFORE judging; "if you'd accept X, then accept it as X" rule. Category-aware Wikipedia rescue (searches "Geiger mountain" not just "Geiger"). Canonical always set even on rejection.
 
 ## Backlog
 - [ ] Self-scoring fallback UI (when API fails)

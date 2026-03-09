@@ -478,6 +478,9 @@ var DEFAULT_CARDS = [
   {id:genId(),col:'done',title:'Strict Mode Removed',
     desc:'Deleted SYSTEM_PROMPT_STRICT entirely. Removed getStrictness/setStrictness from storage. Hardcoded lenient in validator + appeal. One prompt, one mode.',
     tags:['ai','core'],sprint:'post',created:127},
+  {id:genId(),col:'done',title:'Spelling Tolerance & Wiki Rescue',
+    desc:'Strengthened spelling rules: judge must correct spelling BEFORE judging, cannot identify intent then reject. "Pokono"→"Pocono", "Flouride"→"Fluoride" now accepted. Category-aware Wikipedia search (e.g. "Geiger mountain") finds correct disambiguation instead of unrelated homonyms. Judge always sets canonical even on rejection.',
+    tags:['ai'],sprint:'post',created:128},
 
   // --- BACKLOG ---
   {id:genId(),col:'backlog',title:'Self-Scoring Fallback',

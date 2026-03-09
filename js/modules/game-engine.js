@@ -1,8 +1,8 @@
 // F5 Game Engine — pure functions, zero side effects
 // State creation, category/letter selection, scoring
 
-import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, EASY_LETTERS, getPool } from './categories.js?v=20260309c';
-import * as storage from './storage.js?v=20260309c';
+import { CATEGORIES, STANDARD_LETTERS, EXPERT_LETTERS, EASY_LETTERS, getPool } from './categories.js?v=20260309d';
+import * as storage from './storage.js?v=20260309d';
 
 // Fisher-Yates shuffle (returns new array)
 function shuffle(arr) {

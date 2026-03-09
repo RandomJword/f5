@@ -1,15 +1,15 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js?v=20260309g';
-import * as themeManager from './modules/theme-manager.js?v=20260309g';
-import * as grid from './modules/grid.js?v=20260309g';
-import { createTimer, formatTime } from './modules/timer.js?v=20260309g';
-import { newGame, calculateScore } from './modules/game-engine.js?v=20260309g';
-import { validate, appeal } from './modules/validator.js?v=20260309g';
-import { compute as computeStats } from './modules/stats.js?v=20260309g';
-import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309g';
-import { shareGame } from './modules/share.js?v=20260309g';
+import * as storage from './modules/storage.js?v=20260309h';
+import * as themeManager from './modules/theme-manager.js?v=20260309h';
+import * as grid from './modules/grid.js?v=20260309h';
+import { createTimer, formatTime } from './modules/timer.js?v=20260309h';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260309h';
+import { validate, appeal } from './modules/validator.js?v=20260309h';
+import { compute as computeStats } from './modules/stats.js?v=20260309h';
+import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309h';
+import { shareGame } from './modules/share.js?v=20260309h';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];
@@ -828,6 +828,20 @@ function renderStats() {
       </div>`;
     }).join('')}
   </div>`;
+
+  // Wikipedia miss counter (dev insight)
+  const wikiMisses = storage.getWikiMisses();
+  if (wikiMisses.length > 0) {
+    html += `<div class="f5-card" style="margin-top: var(--f5-space-md);">
+      <div class="f5-stat-label" style="margin-bottom: var(--f5-space-sm);">Wikipedia Misses (${wikiMisses.length})</div>
+      <div style="font-size: var(--f5-text-xs); color: var(--f5-text-muted); line-height: 1.6;">
+        ${wikiMisses.slice(-10).reverse().map(m =>
+          `<div>${escapeHtml(m.answer)} → ${escapeHtml(m.category)} (${m.letter})</div>`
+        ).join('')}
+        ${wikiMisses.length > 10 ? `<div style="margin-top: var(--f5-space-xs);">...and ${wikiMisses.length - 10} more</div>` : ''}
+      </div>
+    </div>`;
+  }
 
   container.innerHTML = html;
 

@@ -152,6 +152,21 @@ function clearCache() {
   toRemove.forEach(k => localStorage.removeItem(k));
 }
 
+// Wikipedia miss tracking
+function getWikiMisses() {
+  return get('wiki_misses', []);
+}
+
+function addWikiMisses(misses) {
+  const all = getWikiMisses();
+  for (const m of misses) {
+    all.push({ ...m, date: Date.now() });
+  }
+  // Keep last 100
+  if (all.length > 100) all.splice(0, all.length - 100);
+  set('wiki_misses', all);
+}
+
 // Storage size check
 function getUsageEstimate() {
   let total = 0;
@@ -198,4 +213,6 @@ export {
   addToHistory,
   clearCache,
   getUsageEstimate,
+  getWikiMisses,
+  addWikiMisses,
 };

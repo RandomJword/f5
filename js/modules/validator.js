@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309g';
-import * as storage from './storage.js?v=20260309g';
+import * as api from './claude-api.js?v=20260309h';
+import * as storage from './storage.js?v=20260309h';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([
@@ -304,11 +304,26 @@ async function validate(answers, categories, letters) {
 
   // Process rescue: re-validate rejected answers with Wikipedia context
   const rescueItems = [];
+  const wikiMisses = [];
   for (let i = 0; i < toRescue.length; i++) {
     const wiki = rescueResults[i];
     if (wiki.found && wiki.extract) {
       rescueItems.push({ ...toRescue[i], wiki });
+    } else {
+      // Wikipedia couldn't find it — track the miss
+      wikiMisses.push({
+        category: toRescue[i].item.category,
+        letter: toRescue[i].item.letter,
+        answer: toRescue[i].item.answer,
+        query: toRescue[i].query,
+      });
     }
+  }
+
+  // Log Wikipedia misses for monitoring
+  if (wikiMisses.length > 0) {
+    console.warn('[F5 Wiki] No Wikipedia result for:', wikiMisses);
+    storage.addWikiMisses(wikiMisses);
   }
 
   if (rescueItems.length > 0) {

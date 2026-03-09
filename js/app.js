@@ -1,15 +1,15 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js?v=20260309e';
-import * as themeManager from './modules/theme-manager.js?v=20260309e';
-import * as grid from './modules/grid.js?v=20260309e';
-import { createTimer, formatTime } from './modules/timer.js?v=20260309e';
-import { newGame, calculateScore } from './modules/game-engine.js?v=20260309e';
-import { validate, appeal } from './modules/validator.js?v=20260309e';
-import { compute as computeStats } from './modules/stats.js?v=20260309e';
-import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309e';
-import { shareGame } from './modules/share.js?v=20260309e';
+import * as storage from './modules/storage.js?v=20260309f';
+import * as themeManager from './modules/theme-manager.js?v=20260309f';
+import * as grid from './modules/grid.js?v=20260309f';
+import { createTimer, formatTime } from './modules/timer.js?v=20260309f';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260309f';
+import { validate, appeal } from './modules/validator.js?v=20260309f';
+import { compute as computeStats } from './modules/stats.js?v=20260309f';
+import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309f';
+import { shareGame } from './modules/share.js?v=20260309f';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];
@@ -23,9 +23,9 @@ function init() {
   themeManager.init();
 
   // One-time cache clear for prompt v2 upgrade
-  if (!storage.get('cache_v9')) {
+  if (!storage.get('cache_v10')) {
     storage.clearCache();
-    storage.set('cache_v9', true);
+    storage.set('cache_v10', true);
   }
 
   // Check for crash recovery

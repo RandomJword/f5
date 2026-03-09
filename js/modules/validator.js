@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309e';
-import * as storage from './storage.js?v=20260309e';
+import * as api from './claude-api.js?v=20260309f';
+import * as storage from './storage.js?v=20260309f';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([
@@ -143,7 +143,8 @@ Rules:
    - "Scientists" includes anyone who made significant contributions to any field of science.
    - "Team Sports" includes ANY sport played by teams, even if also categorizable as something else. Polo, rowing, relay races, doubles tennis — all valid.
    - CRITICAL: Do NOT reject because the answer is "primarily known as" something else. People and things belong to MULTIPLE categories. If the answer fits the category AT ALL, accept it.
-   - However, the answer must actually BE the type of thing the category describes. A province is not a country. A lake is not an ocean. A city is not a state. Broad interpretation applies to borderline membership within a category, NOT to accepting answers that are fundamentally the wrong type of thing.
+   - For PEOPLE categories (Painters, Authors, Directors, Scientists, Athletes, Musicians, etc.): a person qualifies if they have EVER done the activity, even once or as a secondary pursuit. Walker Evans painted → valid Painter. Robert Redford directed → valid Director. Winston Churchill wrote books → valid Author. People are multifaceted — do NOT gatekeep based on what they are "primarily" known for. If there is ANY credible connection between the person and the category, accept it.
+   - The "wrong type" rule applies ONLY to non-person factual categories: A province is not a country. A lake is not an ocean. A city is not a state. This rule exists for geographic/taxonomic mistakes, NOT to disqualify people who dabble across disciplines.
    - Apply this broad interpretation to ALL categories.
 2. The letter check depends on the category type:
    - People (authors, scientists, athletes, etc.): the SURNAME determines the letter. Players may write first name, full name, or surname only. When a single name is given, ALWAYS check if it could be a valid surname — do NOT assume it is a first name. Example: "Tennessee Williams" is valid for W because surname "Williams" starts with W. "Einstein" and "Albert Einstein" are both valid for E. "Willis" is valid for W if there is a known person with surname Willis in the category (e.g., Kevin Willis in basketball).
@@ -405,7 +406,8 @@ Rules for judging:
 - Must be real and verifiable (fictional OK if category is about fiction).
 - If the answer includes a parenthetical note like "(gravity)" or "(Soviet leader)", IGNORE it completely. Do NOT fact-check it or use it for/against the answer. It is just a disambiguation hint.
 - Do NOT reject because the person/thing is "primarily known as" something else. If it fits the category AT ALL, accept it.
-- However, the answer must actually BE the type of thing the category describes. A province is not a country. A lake is not an ocean. A city is not a state. Broad interpretation applies to borderline membership, NOT to fundamentally wrong types.
+- For PEOPLE categories (Painters, Authors, Directors, Scientists, Athletes, Musicians, etc.): a person qualifies if they have EVER done the activity, even once or as a secondary pursuit. Walker Evans painted → valid Painter. Robert Redford directed → valid Director. People are multifaceted — do NOT gatekeep based on primary profession.
+- The "wrong type" rule applies ONLY to non-person factual categories: A province is not a country. A lake is not an ocean. A city is not a state. This rule is for geographic/taxonomic errors, NOT for disqualifying people who work across disciplines.
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
 - Spelling: ALWAYS attempt spelling correction BEFORE judging validity. If a close spelling variant fits the category, treat the answer AS the corrected word and accept it. "Pokono" under Mountains = "Pocono" = ACCEPT. "Flouride" under Chemical Elements = "Fluoride" = ACCEPT. "Ghandi" = "Gandhi". "Reed" = "Reid". Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as the strongest context clue — "Kawaii" under Islands = "Kauai". IMPORTANT: If you find yourself thinking "if the player intended X, I would accept it" — then ACCEPT IT AS X. That IS what they intended.
 - Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.

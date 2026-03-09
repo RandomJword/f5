@@ -1,6 +1,6 @@
 // F5 Theme Manager — body class swap + lazy font loading
 
-import * as storage from './storage.js?v=20260309e';
+import * as storage from './storage.js?v=20260309f';
 
 const THEMES = {
   newspaper:  { class: '',                  label: 'Newspaper',         fonts: ['Playfair+Display:wght@700;900', 'Source+Serif+4:ital,wght@0,400;0,700;1,400', 'Courier+Prime'] },

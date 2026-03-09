@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309d';
-import * as storage from './storage.js?v=20260309d';
+import * as api from './claude-api.js?v=20260309e';
+import * as storage from './storage.js?v=20260309e';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([

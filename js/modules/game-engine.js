@@ -119,6 +119,7 @@ function newGame(options = {}) {
     categories,
     letters,
     grid,
+    difficulty,
     status: 'playing', // playing | validating | scored | abandoned
     startedAt: Date.now(),
     duration: options.duration || 300,

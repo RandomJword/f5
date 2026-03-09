@@ -1,14 +1,15 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js?v=20260308a';
-import * as themeManager from './modules/theme-manager.js?v=20260308a';
-import * as grid from './modules/grid.js?v=20260308a';
-import { createTimer, formatTime } from './modules/timer.js?v=20260308a';
-import { newGame, calculateScore } from './modules/game-engine.js?v=20260308a';
-import { validate, appeal } from './modules/validator.js?v=20260308a';
-import { compute as computeStats } from './modules/stats.js?v=20260308a';
-import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260308a';
+import * as storage from './modules/storage.js?v=20260309b';
+import * as themeManager from './modules/theme-manager.js?v=20260309b';
+import * as grid from './modules/grid.js?v=20260309b';
+import { createTimer, formatTime } from './modules/timer.js?v=20260309b';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260309b';
+import { validate, appeal } from './modules/validator.js?v=20260309b';
+import { compute as computeStats } from './modules/stats.js?v=20260309b';
+import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309b';
+import { shareGame } from './modules/share.js?v=20260309b';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];
@@ -216,6 +217,23 @@ function bindGlobalEvents() {
     });
   }
 
+  // Results — share
+  const shareBtn = document.getElementById('btn-share-results');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      if (!activeGame || activeGame.status !== 'scored') return;
+      shareBtn.disabled = true;
+      shareBtn.textContent = 'Sharing...';
+      try {
+        await shareGame(activeGame);
+      } catch (e) {
+        console.error('[F5] Share failed:', e);
+      }
+      shareBtn.disabled = false;
+      shareBtn.textContent = 'Share';
+    });
+  }
+
 }
 
 function populateThemeSelect(select) {
@@ -311,6 +329,7 @@ async function onTimeUp() {
       grid: activeGame.grid,
       results,
       score: activeGame.score,
+      difficulty: activeGame.difficulty,
       date: Date.now(),
     });
 
@@ -817,7 +836,10 @@ function renderStats() {
   if (reviewBtn) {
     reviewBtn.addEventListener('click', () => {
       const game = storage.getLastGame();
-      if (game) showResults(game, false);
+      if (game) {
+        activeGame = game;
+        showResults(game, false);
+      }
     });
   }
 }

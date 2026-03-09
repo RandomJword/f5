@@ -368,8 +368,18 @@ function parseResponse(text) {
     return JSON.parse(trimmed);
   } catch {
     // Strip markdown fences if present
-    const cleaned = trimmed.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '');
-    return JSON.parse(cleaned);
+    const cleaned = trimmed.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // Extract JSON array from anywhere in the text
+      const match = trimmed.match(/\[[\s\S]*\]/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      console.error('[F5 Validator] Unparseable response:', trimmed.slice(0, 500));
+      throw new Error('Unable to parse JSON from AI response');
+    }
   }
 }
 

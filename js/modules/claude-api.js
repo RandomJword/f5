@@ -84,12 +84,18 @@ async function callDirect(systemPrompt, userMessage, maxTokens, model, apiKey) {
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`API ${res.status}: ${err.error?.message || 'Unknown error'}`);
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 200)}`);
   }
 
-  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(`API ${res.status}: ${data.error?.message || 'Unknown error'}`);
+  }
+
   return data.content[0].text;
 }
 
@@ -109,12 +115,18 @@ async function callProxy(systemPrompt, userMessage, maxTokens, model, inviteCode
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`API ${res.status}: ${err.error?.message || 'Unknown error'}`);
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Proxy returned non-JSON (${res.status}): ${text.slice(0, 200)}`);
   }
 
-  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(`API ${res.status}: ${data.error?.message || 'Unknown error'}`);
+  }
+
   return data.content[0].text;
 }
 

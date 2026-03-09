@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309f';
-import * as storage from './storage.js?v=20260309f';
+import * as api from './claude-api.js?v=20260309g';
+import * as storage from './storage.js?v=20260309g';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([
@@ -159,7 +159,7 @@ Rules:
    - Places (cities, countries, states, etc.): use the first word. Example: "New York" is valid for N.
    - Everything else: use the first letter of the answer.
 3. Must be real and verifiable. Fictional entries are OK only if the category is about fiction (e.g., Cartoon Characters, Mythological Figures).
-4. IMPORTANT: Your training data has a knowledge cutoff. You may NOT know about recent movies, songs, books, athletes, events, etc. If an answer sounds plausible for its category but you don't recognize it, mark it VALID and set explanation to "Not recognized but plausible — pending verification." A separate system will verify existence. NEVER reject an answer solely because you haven't heard of it.
+4. Your training data has a knowledge cutoff. If you don't recognize an answer, mark it INVALID with explanation "Not in training data — needs verification" and set canonical to your best guess of what the player meant. A separate system will look it up on Wikipedia and re-submit with full context for you to make an informed ruling. Do NOT guess — let the verification system do its job.
 5. Common abbreviations and nicknames are accepted if widely recognized (e.g., "JFK" for Kennedy, "USA" for United States).
 6. Spelling: ALWAYS attempt spelling correction BEFORE judging validity. If a close spelling variant fits the category, treat the answer AS the corrected word and accept it. This is non-negotiable.
    - The test is NOT "is this spelled correctly?" — it is "can I figure out what the player meant?"
@@ -410,7 +410,7 @@ Rules for judging:
 - The "wrong type" rule applies ONLY to non-person factual categories: A province is not a country. A lake is not an ocean. A city is not a state. This rule is for geographic/taxonomic errors, NOT for disqualifying people who work across disciplines.
 - Geographic features: ignore "Lake", "River", "Mount" etc. — use the proper name for letter matching.
 - Spelling: ALWAYS attempt spelling correction BEFORE judging validity. If a close spelling variant fits the category, treat the answer AS the corrected word and accept it. "Pokono" under Mountains = "Pocono" = ACCEPT. "Flouride" under Chemical Elements = "Fluoride" = ACCEPT. "Ghandi" = "Gandhi". "Reed" = "Reid". Set "canonical" to the correct spelling. CRITICAL: Use the CATEGORY as the strongest context clue — "Kawaii" under Islands = "Kauai". IMPORTANT: If you find yourself thinking "if the player intended X, I would accept it" — then ACCEPT IT AS X. That IS what they intended.
-- Your training data has a knowledge cutoff. Do NOT reject answers just because you haven't heard of them. If it sounds plausible, accept it.
+- Your training data has a knowledge cutoff. If you don't recognize an answer but it sounds plausible, give the player the benefit of the doubt — they are appealing because they believe they are right.
 - Be generous. Accept common abbreviations, nicknames, and minor spelling errors if the intent is clear. When in doubt, accept it.
 - For creative/subjective categories ("Things That Are ___", "Things at a ___", "Excuses to ___", etc.): be EXTREMELY loose. Almost any defensible answer should be accepted. These are meant to be fun.
 - For slang categories ("GenX Slang", "Baby Boomer Slang", etc.): accept ANY word/phrase that was plausibly used as slang by that generation. The player lived through it and probably knows better than you.

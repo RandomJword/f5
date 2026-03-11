@@ -1,15 +1,15 @@
 // F5 — App Entry Point
 // Init, screen routing, event wiring
 
-import * as storage from './modules/storage.js?v=20260309k';
-import * as themeManager from './modules/theme-manager.js?v=20260309k';
-import * as grid from './modules/grid.js?v=20260309k';
-import { createTimer, formatTime } from './modules/timer.js?v=20260309k';
-import { newGame, calculateScore } from './modules/game-engine.js?v=20260309k';
-import { validate, appeal } from './modules/validator.js?v=20260309k';
-import { compute as computeStats } from './modules/stats.js?v=20260309k';
-import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260309k';
-import { shareGame } from './modules/share.js?v=20260309k';
+import * as storage from './modules/storage.js?v=20260311a';
+import * as themeManager from './modules/theme-manager.js?v=20260311a';
+import * as grid from './modules/grid.js?v=20260311a';
+import { createTimer, formatTime } from './modules/timer.js?v=20260311a';
+import { newGame, calculateScore } from './modules/game-engine.js?v=20260311a';
+import { validate, appeal } from './modules/validator.js?v=20260311a';
+import { compute as computeStats } from './modules/stats.js?v=20260311a';
+import { hasProxy, verifyInviteCode } from './modules/claude-api.js?v=20260311a';
+import { shareGame } from './modules/share.js?v=20260311a';
 
 // Screen IDs
 const SCREENS = ['setup', 'menu', 'play', 'validating', 'results', 'stats', 'settings'];

@@ -1,8 +1,8 @@
 // F5 Validator — prompt builder, cache, JSON parser
 // Sends non-empty answers to Claude for validation. Caches results.
 
-import * as api from './claude-api.js?v=20260309k';
-import * as storage from './storage.js?v=20260309k';
+import * as api from './claude-api.js?v=20260311a';
+import * as storage from './storage.js?v=20260311a';
 
 // Categories where answers are fictional — skip Wikipedia verification
 const FICTION_CATEGORIES = new Set([
@@ -206,6 +206,7 @@ Rules:
 10. For slang categories (e.g., "GenX Slang", "Baby Boomer Slang", "Millennial Slang", "Gen Z Slang"): accept ANY word or phrase that was plausibly used as slang by that generation. Slang is informal and regional — do NOT reject because you don't recognize it or it seems too obscure. If it sounds like it could be slang, accept it. The player lived through that era and probably knows better than you.
 11. For terminology categories (e.g., "Architecture Terminology", "Design Terminology", "Art Terminology", "Music Terminology"): accept technical terms, jargon, and common shorthand used by practitioners. Be generous with borderline terms.
 12. For decade-specific categories (e.g., "80s Movies", "70s Songs"): accept the answer if it is plausibly from that era. Do not reject over borderline release dates.
+   IMPORTANT: "2000s" categories (e.g., "2000s Movies", "2000s Musical Artists", "2000s Songs") mean from the year 2000 ONWARD — the entire 21st century, NOT limited to the 2000-2009 decade. A 2014 movie, a 2019 movie, and a 2023 song are ALL valid for "2000s" categories. This is DIFFERENT from 60s/70s/80s/90s categories, which refer to specific decades.
 13. When in doubt, accept it. The player is playing solo for fun.
 
 Respond with a JSON array only. No markdown fences. No extra text.
@@ -499,6 +500,7 @@ Rules for judging:
 - For slang categories ("GenX Slang", "Baby Boomer Slang", etc.): accept ANY word/phrase that was plausibly used as slang by that generation. The player lived through it and probably knows better than you.
 - For terminology categories ("Architecture Terminology", "Design Terminology", etc.): accept technical terms, jargon, and common shorthand.
 - For decade-specific categories ("80s Movies", "70s Songs", etc.): accept if plausibly from that era. Don't reject over borderline dates.
+- IMPORTANT: "2000s" categories (e.g., "2000s Movies", "2000s Musical Artists", "2000s Songs") mean from the year 2000 ONWARD — the entire 21st century, NOT limited to the 2000-2009 decade. A 2014 movie, a 2019 movie, and a 2023 song are ALL valid. This is DIFFERENT from 60s/70s/80s/90s, which refer to specific decades.
 
 The first judge may have been wrong. Consider carefully whether this answer legitimately belongs to the category and matches the required letter. Players sometimes have creative, obscure, but perfectly valid answers.
 

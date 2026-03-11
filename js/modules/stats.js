@@ -1,6 +1,6 @@
 // F5 Stats — compute aggregates from game history
 
-import * as storage from './storage.js?v=20260309k';
+import * as storage from './storage.js?v=20260311a';
 
 function compute() {
   const history = storage.getHistory();
